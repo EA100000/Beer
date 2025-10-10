@@ -6,7 +6,7 @@ import { getUltraPrecisePredictions } from '@/utils/ultraPrecisePredictions';
 import { TeamStats } from '@/types/football';
 import { 
   Target, 
-  Corner, 
+  Square, 
   AlertTriangle, 
   Card as CardIcon, 
   Hand, 
@@ -130,7 +130,7 @@ export const UltraPrecisePredictions: React.FC<UltraPrecisePredictionsProps> = (
             <Card className="border-blue-200 bg-blue-50/30">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Corner className="h-5 w-5 text-blue-600" />
+                  <Square className="h-5 w-5 text-blue-600" />
                   Corners Ultra-Précis
                   <Badge variant="outline" className="text-xs">
                     R²: {predictions.modelAccuracy.corners}%

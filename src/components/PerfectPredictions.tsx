@@ -6,7 +6,7 @@ import { getPerfectMatchPredictions } from '@/utils/perfectMatchPredictions';
 import { TeamStats } from '@/types/football';
 import { 
   Target, 
-  Corner, 
+  Square, 
   AlertTriangle, 
   Card as CardIcon, 
   Hand, 
@@ -88,7 +88,7 @@ export const PerfectPredictions: React.FC<PerfectPredictionsProps> = ({
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Corner className="h-5 w-5" />
+                  <Square className="h-5 w-5" />
                   Corners
                 </CardTitle>
               </CardHeader>
