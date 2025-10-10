@@ -8,7 +8,7 @@ import {
   Target, 
   Square, 
   AlertTriangle, 
-  Card as CardIcon, 
+  CreditCard as CardIcon, 
   Hand, 
   Goal,
   TrendingUp,
