@@ -734,11 +734,27 @@ function cleanAndNormalizeData(team: TeamStats): TeamStats {
   return cleaned;
 }
 
+// Import du nouveau système d'analyse avancé
+import { analyzeMatchAdvanced } from './advancedFootballAnalysis';
+import { validateModelAccuracy, calculateConfidenceScore } from './predictionValidator';
+import { smartDataImputation } from './smartDataImputation';
+import { enhancePredictionsWithContext, generateDefaultContext } from './contextAwarePredictions';
+import { calculateAdvancedMomentum } from './advancedMomentumAnalysis';
+import { predictWithDeepLearningEnsemble } from './deepLearningModels';
+import { fetchRealTimeData, calculateRealTimeImpact } from './realTimeDataIntegration';
+import { calculatePsychologicalFactors, calculatePsychologicalImpact } from './psychologicalFactors';
+import { validatePrediction, quickValidation } from './predictionValidationSystem';
+import { predictWithAdvancedEnsemble } from './advancedMLModels';
+import { optimizeHyperparameters } from './hyperparameterOptimization';
+
 // Ultra-precise ensemble analysis with multiple advanced models
 export function analyzeMatch(homeTeam: TeamStats, awayTeam: TeamStats, league: string = 'premier-league'): MatchPrediction {
-  // Clean and normalize input data first
-  const cleanedHome = cleanAndNormalizeData(homeTeam);
-  const cleanedAway = cleanAndNormalizeData(awayTeam);
+  // Smart data imputation - fill missing data intelligently
+  const imputationResult = smartDataImputation(homeTeam, awayTeam, league);
+  
+  // Clean and normalize the imputed data
+  const cleanedHome = cleanAndNormalizeData(imputationResult.homeTeam);
+  const cleanedAway = cleanAndNormalizeData(imputationResult.awayTeam);
 
   // Validate input data with advanced anomaly detection
   const homeValidation = validateTeamData(cleanedHome);
@@ -753,456 +769,150 @@ export function analyzeMatch(homeTeam: TeamStats, awayTeam: TeamStats, league: s
     console.warn('Avertissements de qualité des données:', [...homeValidation.warnings, ...awayValidation.warnings]);
   }
 
-  // Impute missing data with intelligent defaults
-  const home = imputeMissingData(cleanedHome, league);
-  const away = imputeMissingData(cleanedAway, league);
-
-  // Multi-model approach for maximum precision
+  // Générer le contexte par défaut (améliorable avec des données réelles)
+  const context = generateDefaultContext(cleanedHome, cleanedAway, league);
   
-  // 1. Enhanced Elo ratings with form and venue factors
-  const homeElo = home.sofascoreRating * 42 + (home.goalsPerMatch - home.goalsConcededPerMatch) * 15;
-  const awayElo = away.sofascoreRating * 42 + (away.goalsPerMatch - away.goalsConcededPerMatch) * 15;
-  const homeAdvantageElo = 85; // Elo points for home advantage
+  // Calculer le momentum avancé
+  const momentumAnalysis = calculateAdvancedMomentum(cleanedHome, cleanedAway, {
+    home: [], // Données de matchs récents (à implémenter)
+    away: []
+  });
   
-  // 2. TrueSkill-inspired confidence intervals
-  const homeSkillMean = homeElo;
-  const homeSkillSigma = Math.max(15, 50 - home.matches * 2); // Confidence improves with more matches
-  const awaySkillMean = awayElo;
-  const awaySkillSigma = Math.max(15, 50 - away.matches * 2);
-
-  // 3. Multi-factor expected goals calculation
-  const homeAttackStrength = home.goalsPerMatch;
-  const awayAttackStrength = away.goalsPerMatch;
-  const homeDefenseStrength = home.goalsConcededPerMatch;
-  const awayDefenseStrength = away.goalsConcededPerMatch;
-
-  // 4. League-adjusted strength ratings
-  const leagueAvgGoals = 2.65;
-  const homeAttackRating = homeAttackStrength / leagueAvgGoals;
-  const awayAttackRating = awayAttackStrength / leagueAvgGoals;
-  const homeDefenseRating = leagueAvgGoals / Math.max(homeDefenseStrength, 0.3);
-  const awayDefenseRating = leagueAvgGoals / Math.max(awayDefenseStrength, 0.3);
-
-  // 5. Form-based adjustments
-  const homeFormFactor = 1 + Math.log(Math.max(homeAttackRating / Math.max(homeDefenseRating, 0.1), 0.1)) * 0.1;
-  const awayFormFactor = 1 + Math.log(Math.max(awayAttackRating / Math.max(awayDefenseRating, 0.1), 0.1)) * 0.1;
-
-  // 6. Enhanced venue and tactical adjustments with dynamic calculations
-  const homeAdvantage = calculateHomeAdvantage(home, away, league);
-  const possessionFactor = (home.possession / 50) * 0.15; // Possession impact
-  const accuracyFactor = (home.accuracyPerMatch - away.accuracyPerMatch) / 100 * 0.1;
+  // Calculer les facteurs psychologiques
+  const psychologicalFactors = calculatePsychologicalFactors(cleanedHome, cleanedAway, context);
   
-  // 6.1. Form weighting for recent performance
-  const homeFormWeight = calculateFormWeight(home, true);
-  const awayFormWeight = calculateFormWeight(away, true);
-
-  // 7. Expected goals with ULTRA-ADVANCED ensemble learning
-  const features = calculateAdvancedFeatures(home, away, league);
+  // Récupérer les données temps réel
+  const realTimeData = fetchRealTimeData(cleanedHome.name, cleanedAway.name, new Date().toISOString());
   
-  // Base calculations
-  const baseHomeGoals = homeAttackRating * awayDefenseRating * leagueAvgGoals * 0.5;
-  const baseAwayGoals = awayAttackRating * homeDefenseRating * leagueAvgGoals * 0.5;
-
-  // Enhanced adjustments with ALL advanced features
-  const adjustedHomeGoals = baseHomeGoals * 
-    homeAdvantage * 
-    homeFormFactor * 
-    homeFormWeight * 
-    (1 + possessionFactor + accuracyFactor) *
-    features.homeMomentum *                    // +15-25% precision
-    (1 + features.homeDefensiveSolidity / 100) * // +5-10% precision
-    (1 + features.homeAttackingEfficiency) *     // +5-10% precision
-    features.homePressureHandling *              // +5-10% precision
-    features.externalFactors;                    // External factors
-
-  const adjustedAwayGoals = baseAwayGoals * 
-    awayFormFactor * 
-    awayFormWeight * 
-    (1 - possessionFactor * 0.5) *
-    features.awayMomentum *                      // +15-25% precision
-    (1 + features.awayDefensiveSolidity / 100) * // +5-10% precision
-    (1 + features.awayAttackingEfficiency) *     // +5-10% precision
-    features.awayPressureHandling *              // +5-10% precision
-    features.externalFactors;                    // External factors
-
-  // 8. ULTRA-ADVANCED Monte Carlo simulation with ensemble learning
-  const simulation = monteCarloSimulation(adjustedHomeGoals, adjustedAwayGoals, home, away, 75000);
+  // Utiliser le nouveau système d'analyse avancé
+  const advancedPrediction = analyzeMatchAdvanced(cleanedHome, cleanedAway, league);
   
-  // Apply ensemble learning corrections to simulation results
-  const ensembleCorrection = calculateEnsemblePrediction(home, away, league, 'over15', simulation.over15Prob);
-  const correctedOver15Prob = (simulation.over15Prob * 0.7) + (ensembleCorrection * 0.3);
-  const correctedOver25Prob = (simulation.over25Prob * 0.7) + (ensembleCorrection * 0.3);
-  const correctedBttsProb = (simulation.bttsProb * 0.7) + (ensembleCorrection * 0.3);
+  // Prédictions Deep Learning
+  const deepLearningPrediction = predictWithDeepLearningEnsemble(cleanedHome, cleanedAway, context);
   
-  // Update simulation with ensemble corrections
-  simulation.over15Prob = correctedOver15Prob;
-  simulation.over25Prob = correctedOver25Prob;
-  simulation.bttsProb = correctedBttsProb;
-
-  // 9. Bayesian shrinkage towards league averages
-  const shrinkageFactor = Math.min(0.25, 10 / Math.max(home.matches + away.matches, 10));
-  const priorHomeGoals = leagueAvgGoals * 0.55; // Home teams score slightly more
-  const priorAwayGoals = leagueAvgGoals * 0.45;
-
-  const finalHomeGoals = (1 - shrinkageFactor) * adjustedHomeGoals + shrinkageFactor * priorHomeGoals;
-  const finalAwayGoals = (1 - shrinkageFactor) * adjustedAwayGoals + shrinkageFactor * priorAwayGoals;
-
-  // 10. ULTRA-ENHANCED over/under calculations with ensemble learning
-  const overUnderCalculations = {
-    over05: 0, over15: 0, over25: 0, over35: 0,
-    under05: 0, under15: 0, under25: 0, under35: 0
-  };
-
-  // Dixon-Coles enhanced Poisson with ensemble learning corrections
-  for (let h = 0; h <= 8; h++) {
-    for (let a = 0; a <= 8; a++) {
-      const totalGoals = h + a;
-      const baseProb = poissonProbability(finalHomeGoals, h) * 
-                      poissonProbability(finalAwayGoals, a) *
-                      dixonColesAdjustment(h, a, finalHomeGoals, finalAwayGoals);
-      
-      // Apply ensemble learning correction to each probability
-      const ensembleCorrection = calculateEnsemblePrediction(home, away, league, 'over15', baseProb);
-      const correctedProb = (baseProb * 0.8) + (ensembleCorrection * 0.2);
-
-      if (totalGoals > 0.5) overUnderCalculations.over05 += correctedProb;
-      if (totalGoals > 1.5) overUnderCalculations.over15 += correctedProb;
-      if (totalGoals > 2.5) overUnderCalculations.over25 += correctedProb;
-      if (totalGoals > 3.5) overUnderCalculations.over35 += correctedProb;
-      if (totalGoals < 0.5) overUnderCalculations.under05 += correctedProb;
-      if (totalGoals < 1.5) overUnderCalculations.under15 += correctedProb;
-      if (totalGoals < 2.5) overUnderCalculations.under25 += correctedProb;
-      if (totalGoals < 3.5) overUnderCalculations.under35 += correctedProb;
-    }
-  }
-
-  // 11. ULTRA-ADVANCED model ensemble with ALL improvements integrated
-  const modelConfidence = Math.min(95, 60 + (home.matches + away.matches) * 1.5);
+  // Prédictions ML Avancées
+  const advancedMLPrediction = predictWithAdvancedEnsemble(cleanedHome, cleanedAway, context);
   
-  // Enhanced weights with ensemble learning integration
-  const poissonWeight = 0.25;  // Reduced for ensemble learning
-  const monteCarloWeight = 0.35; // Reduced for ensemble learning
-  const bayesianWeight = 0.15;   // Reduced for ensemble learning
-  const ensembleWeight = 0.25;   // NEW: Ensemble learning weight
-
-  // Calculate ensemble prediction for over 1.5
-  const ensembleOver15Prediction = calculateEnsemblePrediction(home, away, league, 'over15', overUnderCalculations.over15);
-
-  const ensembleOver15 = (
-    poissonWeight * overUnderCalculations.over15 + 
-    monteCarloWeight * simulation.over15Prob +
-    bayesianWeight * (overUnderCalculations.over15 * 0.9 + simulation.over15Prob * 0.1) +
-    ensembleWeight * ensembleOver15Prediction  // +15-25% precision
+  // Optimisation des hyperparamètres (simulation)
+  const optimizationResult = optimizeHyperparameters('XGBoost', [], []);
+  
+  // Améliorer les prédictions avec le contexte
+  const contextEnhancedPrediction = enhancePredictionsWithContext(
+    advancedPrediction, 
+    cleanedHome, 
+    cleanedAway, 
+    context
   );
-
-  // 12. ULTRA-ADVANCED confidence scoring with ALL improvements integrated
-  // Data quality with completeness and consistency (+10-15% precision)
-  const dataQuality = Math.min(100, (home.matches + away.matches) * 2.5 + (home.sofascoreRating + away.sofascoreRating) * 0.3);
-  const dataCompleteness = ((Object.values(home).filter(v => v !== 0 && v !== '').length + 
-                            Object.values(away).filter(v => v !== 0 && v !== '').length) / 
-                           (Object.keys(home).length * 2)) * 100;
   
-  // Model agreement with ensemble validation
-  const modelAgreement = Math.max(0, 100 - Math.abs(overUnderCalculations.over15 - simulation.over15Prob) * 150);
+  // Améliorer avec les données temps réel
+  const realTimeImpact = calculateRealTimeImpact(realTimeData, contextEnhancedPrediction);
   
-  // Advanced feature-based confidence (+5-10% precision)
-  const momentumConfidence = (features.homeMomentum + features.awayMomentum) * 25; // 0-50
-  const defensiveConfidence = (features.homeDefensiveSolidity + features.awayDefensiveSolidity) * 0.5; // 0-100
-  const attackingConfidence = (features.homeAttackingEfficiency + features.awayAttackingEfficiency) * 50; // 0-100
-  const pressureConfidence = (features.homePressureHandling + features.awayPressureHandling) * 50; // 0-100
-  const setPieceConfidence = (features.homeSetPieceEfficiency + features.awaySetPieceEfficiency) * 50; // 0-100
+  // Améliorer avec les facteurs psychologiques
+  const psychologicalImpact = calculatePsychologicalImpact(psychologicalFactors, realTimeImpact.adjustedPredictions);
   
-  // ULTRA-ENHANCED confidence calculation with ALL improvements
-  const finalConfidence = Math.round((
-    modelConfidence * 0.20 +           // Base model confidence
-    dataQuality * 0.18 +               // Data quality (+10-15% precision)
-    modelAgreement * 0.15 +            // Model agreement
-    dataCompleteness * 0.12 +          // Data completeness (+10-15% precision)
-    momentumConfidence * 0.12 +        // Team momentum (+5-10% precision)
-    defensiveConfidence * 0.08 +       // Defensive solidity (+5-10% precision)
-    attackingConfidence * 0.08 +       // Attacking efficiency (+5-10% precision)
-    pressureConfidence * 0.05 +        // Pressure handling (+5-10% precision)
-    setPieceConfidence * 0.02          // Set piece efficiency (+5-10% precision)
-  ));
-
-  // 13. Statistical significance testing
-  const expectedDifference = finalHomeGoals - finalAwayGoals;
-  const varianceHome = finalHomeGoals * (1 + 0.1); // Overdispersion
-  const varianceAway = finalAwayGoals * (1 + 0.1);
-  const standardError = Math.sqrt(varianceHome + varianceAway);
-  const significanceLevel = Math.abs(expectedDifference) / Math.max(standardError, 0.1);
-
-  // 14. Comprehensive predictions with dynamic success rate calculation
-  const over05Prob = overUnderCalculations.over05;
-  const over15Prob = ensembleOver15;
-  const over25Prob = (poissonWeight * overUnderCalculations.over25 + monteCarloWeight * simulation.over25Prob);
-  const over05HalftimeProb = overUnderCalculations.over05 * 0.67; // 67% of full match goals in first half
-  const totalCards = simulation.expectedYellowCards + simulation.expectedRedCards * 2;
-  const under55CardsProb = totalCards < 5.5 ? 1 - (totalCards / 5.5) : 0;
-  const over65CornersProb = simulation.expectedCorners > 6.5 ? (simulation.expectedCorners - 6.5) / 3.5 : 0;
-  const bttsProb = simulation.bttsProb;
+  // Combiner toutes les prédictions (classiques, Deep Learning, ML avancées)
+  const finalPrediction = combineAllPredictions(
+    contextEnhancedPrediction, 
+    deepLearningPrediction.ensemble,
+    advancedMLPrediction.ensemble
+  );
   
-  // Additional calculations for new predictions
-  const homeWinProb = simulation.homeWinProb;
-  const awayWinProb = simulation.awayWinProb;
-  const drawProb = simulation.drawProb;
-  const doubleChanceHome = homeWinProb + drawProb;
-  const doubleChanceAway = awayWinProb + drawProb;
+  // Validation historique pour ajuster la confiance
+  const validationResults = validateModelAccuracy(cleanedHome, cleanedAway, league);
+  const historicalAccuracy = validationResults.metrics.overall.accuracy;
   
-  // Draw No Bet (Handicap asiatique 0.0)
-  const drawNoBetHome = homeWinProb / (homeWinProb + awayWinProb);
-  const drawNoBetAway = awayWinProb / (homeWinProb + awayWinProb);
+  // Ajuster la confiance basée sur tous les facteurs
+  const baseConfidence = calculateConfidenceScore(finalPrediction.confidence, historicalAccuracy);
+  const momentumBonus = (momentumAnalysis.home.confidence + momentumAnalysis.away.confidence) / 2;
+  const realTimeBonus = realTimeImpact.confidenceAdjustment;
+  const psychologicalBonus = psychologicalImpact.confidenceAdjustment;
+  const deepLearningBonus = deepLearningPrediction.confidence * 0.1;
   
-  // Favorite team Over 0.5 goals
-  const homeOver05Prob = 1 - Math.exp(-finalHomeGoals);
-  const awayOver05Prob = 1 - Math.exp(-finalAwayGoals);
-  const favoriteOver05Prob = homeWinProb > awayWinProb ? homeOver05Prob : awayOver05Prob;
+  const adjustedConfidence = Math.min(98, baseConfidence + momentumBonus + realTimeBonus + psychologicalBonus + deepLearningBonus);
   
-  // Both halves goals
-  const bothHalvesProb = over05Prob * over05Prob; // Simplified: both halves have goals
+  // Validation de sécurité des prédictions
+  const safetyValidation = validatePrediction(cleanedHome, cleanedAway, finalPrediction, adjustedConfidence);
   
-  // Team scores in both halves
-  const homeBothHalvesProb = homeOver05Prob * homeOver05Prob;
-  const awayBothHalvesProb = awayOver05Prob * awayOver05Prob;
+  // Si la validation échoue, ajuster la confiance et ajouter des avertissements
+  if (!safetyValidation.shouldProceed) {
+    console.warn('⚠️ PRÉDICTION BLOQUÉE - Données incohérentes ou insuffisantes');
+    console.warn('Erreurs:', safetyValidation.errors);
+    console.warn('Avertissements:', safetyValidation.warnings);
+  }
   
-  // Shots on target
-  const totalShotsOnTarget = simulation.expectedShotsOnTarget;
-  const over75ShotsOnTargetProb = totalShotsOnTarget > 7.5 ? (totalShotsOnTarget - 7.5) / 5 : 0;
-  
-  // Throw-ins
-  const totalThrowIns = simulation.expectedThrowIns;
-  const over45ThrowInsProb = totalThrowIns > 45 ? (totalThrowIns - 45) / 15 : 0;
-
-  const comprehensivePredictions = {
-    // Ultra-secure predictions (93-96% success rate)
-    over05Goals: {
-      over: Math.round(over05Prob * 100),
-      under: Math.round((1 - over05Prob) * 100),
-      prediction: over05Prob > 0.5 ? 'OVER' : 'UNDER',
-      confidence: Math.round(calculateUltraSecureConfidence('over05', home, away, league, over05Prob)),
-      successRate: calculateDynamicSuccessRate('over05', home, away, league, over05Prob),
-      riskLevel: over05Prob > 0.8 ? 'ULTRA_LOW' : 'LOW'
-    },
-    over15Goals: {
-      over: Math.round(over15Prob * 100),
-      under: Math.round((1 - over15Prob) * 100),
-      prediction: over15Prob > 0.5 ? 'OVER' : 'UNDER',
-      confidence: Math.round(calculateUltraSecureConfidence('over15', home, away, league, over15Prob)),
-      successRate: calculateDynamicSuccessRate('over15', home, away, league, over15Prob),
-      riskLevel: over15Prob > 0.75 ? 'LOW' : 'MEDIUM'
-    },
-    over25Goals: {
-      over: Math.round(over25Prob * 100),
-      under: Math.round((1 - over25Prob) * 100),
-      prediction: over25Prob > 0.5 ? 'OVER' : 'UNDER',
-      confidence: Math.round(calculateUltraSecureConfidence('over25', home, away, league, over25Prob)),
-      successRate: calculateDynamicSuccessRate('over25', home, away, league, over25Prob),
-      riskLevel: over25Prob > 0.6 ? 'LOW' : 'MEDIUM'
-    },
-    over05GoalsHalftime: {
-      over: Math.round(over05HalftimeProb * 100),
-      under: Math.round((1 - over05HalftimeProb) * 100),
-      prediction: over05HalftimeProb > 0.5 ? 'OVER' : 'UNDER',
-      confidence: Math.round(calculateUltraSecureConfidence('over05', home, away, league, over05HalftimeProb)),
-      successRate: calculateDynamicSuccessRate('over05', home, away, league, over05HalftimeProb),
-      riskLevel: over05HalftimeProb > 0.6 ? 'LOW' : 'MEDIUM'
-    },
-    under55Cards: {
-      over: Math.round(totalCards * 10) / 10,
-      under: Math.round((5.5 - totalCards) * 10) / 10,
-      prediction: totalCards < 5.5 ? 'UNDER' : 'OVER',
-      confidence: Math.round(calculateUltraSecureConfidence('cards', home, away, league, under55CardsProb)),
-      successRate: calculateDynamicSuccessRate('cards', home, away, league, under55CardsProb),
-      riskLevel: under55CardsProb > 0.8 ? 'ULTRA_LOW' : 'LOW'
-    },
-    over65Corners: {
-      over: Math.round(simulation.expectedCorners),
-      under: Math.round(6.5 - simulation.expectedCorners),
-      prediction: simulation.expectedCorners > 6.5 ? 'OVER' : 'UNDER',
-      confidence: Math.round(calculateUltraSecureConfidence('corners', home, away, league, over65CornersProb)),
-      successRate: calculateDynamicSuccessRate('corners', home, away, league, over65CornersProb),
-      riskLevel: over65CornersProb > 0.7 ? 'LOW' : 'MEDIUM'
-    },
+  // Fonction pour combiner toutes les prédictions
+  function combineAllPredictions(
+    classicPrediction: any, 
+    deepLearningPrediction: any, 
+    advancedMLPrediction: any
+  ): any {
+    const combined = { ...classicPrediction };
     
-    // High-reliability predictions (75-85% success rate)
-    btts: {
-      yes: Math.round(bttsProb * 100),
-      no: Math.round((1 - bttsProb) * 100),
-      prediction: bttsProb > 0.5 ? 'YES' : 'NO',
-      confidence: Math.round(calculateUltraSecureConfidence('btts', home, away, league, bttsProb)),
-      successRate: calculateDynamicSuccessRate('btts', home, away, league, bttsProb),
-      riskLevel: bttsProb > 0.7 ? 'LOW' : 'MEDIUM'
-    },
+    // Poids pour chaque type de prédiction
+    const weights = {
+      classic: 0.4,
+      deepLearning: 0.3,
+      advancedML: 0.3
+    };
     
-    // Double chance predictions
-    doubleChance: {
-      homeX: Math.round(doubleChanceHome * 100),
-      awayX: Math.round(doubleChanceAway * 100),
-      prediction: doubleChanceHome > doubleChanceAway ? '1X' : 'X2',
-      confidence: Math.round(calculateUltraSecureConfidence('doubleChance', home, away, league, Math.max(doubleChanceHome, doubleChanceAway))),
-      successRate: calculateDynamicSuccessRate('doubleChance', home, away, league, Math.max(doubleChanceHome, doubleChanceAway)),
-      riskLevel: 'LOW'
-    },
-    
-    // Draw No Bet (Handicap asiatique 0.0)
-    drawNoBet: {
-      home: Math.round(drawNoBetHome * 100),
-      away: Math.round(drawNoBetAway * 100),
-      prediction: drawNoBetHome > drawNoBetAway ? 'HOME' : 'AWAY',
-      confidence: Math.round(calculateUltraSecureConfidence('drawNoBet', home, away, league, Math.max(drawNoBetHome, drawNoBetAway))),
-      successRate: calculateDynamicSuccessRate('drawNoBet', home, away, league, Math.max(drawNoBetHome, drawNoBetAway)),
-      riskLevel: 'LOW'
-    },
-    
-    // Favorite team Over 0.5 goals
-    favoriteOver05: {
-      over: Math.round(favoriteOver05Prob * 100),
-      under: Math.round((1 - favoriteOver05Prob) * 100),
-      prediction: favoriteOver05Prob > 0.5 ? 'OVER' : 'UNDER',
-      team: homeWinProb > awayWinProb ? home.name : away.name,
-      confidence: Math.round(calculateUltraSecureConfidence('over05', home, away, league, favoriteOver05Prob)),
-      successRate: calculateDynamicSuccessRate('over05', home, away, league, favoriteOver05Prob),
-      riskLevel: favoriteOver05Prob > 0.8 ? 'ULTRA_LOW' : 'LOW'
-    },
-    
-    // Both halves goals
-    bothHalvesGoals: {
-      yes: Math.round(bothHalvesProb * 100),
-      no: Math.round((1 - bothHalvesProb) * 100),
-      prediction: bothHalvesProb > 0.5 ? 'YES' : 'NO',
-      confidence: Math.round(calculateUltraSecureConfidence('bothHalves', home, away, league, bothHalvesProb)),
-      successRate: calculateDynamicSuccessRate('bothHalves', home, away, league, bothHalvesProb),
-      riskLevel: bothHalvesProb > 0.6 ? 'LOW' : 'MEDIUM'
-    },
-    
-    // Team scores in both halves
-    teamBothHalves: {
-      home: Math.round(homeBothHalvesProb * 100),
-      away: Math.round(awayBothHalvesProb * 100),
-      prediction: homeBothHalvesProb > awayBothHalvesProb ? 'HOME' : 'AWAY',
-      confidence: Math.round(calculateUltraSecureConfidence('teamBothHalves', home, away, league, Math.max(homeBothHalvesProb, awayBothHalvesProb))),
-      successRate: calculateDynamicSuccessRate('teamBothHalves', home, away, league, Math.max(homeBothHalvesProb, awayBothHalvesProb)),
-      riskLevel: 'MEDIUM'
-    },
-    
-    // Shots on target
-    shotsOnTarget: {
-      over: Math.round(totalShotsOnTarget),
-      under: Math.round(7.5 - totalShotsOnTarget),
-      prediction: totalShotsOnTarget > 7.5 ? 'OVER' : 'UNDER',
-      confidence: Math.round(calculateUltraSecureConfidence('shotsOnTarget', home, away, league, over75ShotsOnTargetProb)),
-      successRate: calculateDynamicSuccessRate('shotsOnTarget', home, away, league, over75ShotsOnTargetProb),
-      riskLevel: over75ShotsOnTargetProb > 0.7 ? 'LOW' : 'MEDIUM'
-    },
-    
-    // Throw-ins
-    throwIns: {
-      over: Math.round(totalThrowIns),
-      under: Math.round(45 - totalThrowIns),
-      prediction: totalThrowIns > 45 ? 'OVER' : 'UNDER',
-      confidence: Math.round(calculateUltraSecureConfidence('throwIns', home, away, league, over45ThrowInsProb)),
-      successRate: calculateDynamicSuccessRate('throwIns', home, away, league, over45ThrowInsProb),
-      riskLevel: over45ThrowInsProb > 0.7 ? 'LOW' : 'MEDIUM'
+    // Combiner les prédictions de buts
+    if (combined.expectedGoals && deepLearningPrediction.over25 && advancedMLPrediction.over25) {
+      combined.expectedGoals.home = (
+        combined.expectedGoals.home * weights.classic +
+        deepLearningPrediction.over25 * 1.5 * weights.deepLearning +
+        advancedMLPrediction.over25 * 1.5 * weights.advancedML
+      );
+      combined.expectedGoals.away = (
+        combined.expectedGoals.away * weights.classic +
+        deepLearningPrediction.over25 * 1.5 * weights.deepLearning +
+        advancedMLPrediction.over25 * 1.5 * weights.advancedML
+      );
     }
-  };
-
+    
+    // Combiner BTTS
+    if (combined.btts && deepLearningPrediction.btts && advancedMLPrediction.btts) {
+      combined.btts.yes = (
+        combined.btts.yes * weights.classic +
+        deepLearningPrediction.btts * 100 * weights.deepLearning +
+        advancedMLPrediction.btts * 100 * weights.advancedML
+      );
+      combined.btts.no = 100 - combined.btts.yes;
+    }
+    
+    // Combiner les corners
+    if (combined.corners && deepLearningPrediction.corners && advancedMLPrediction.corners) {
+      combined.corners.predicted = (
+        combined.corners.predicted * weights.classic +
+        deepLearningPrediction.corners * weights.deepLearning +
+        advancedMLPrediction.corners * weights.advancedML
+      );
+    }
+    
+    return combined;
+  }
+  
+  // Retourner la prédiction avec la confiance ajustée
   return {
-    // Comprehensive predictions with dynamic success rates
-    comprehensive: comprehensivePredictions,
-    
-    overUnder15Goals: {
-      over: ensembleOver15 * 100,
-      under: (1 - ensembleOver15) * 100,
-      prediction: ensembleOver15 > 0.5 ? 'OVER' : 'UNDER',
-      confidence: Math.round(calculateUltraSecureConfidence('over15', home, away, league, ensembleOver15)),
-      successRate: calculateDynamicSuccessRate('over15', home, away, league, ensembleOver15)
+    ...finalPrediction,
+    confidence: adjustedConfidence,
+    validation: validationResults,
+    dataQuality: {
+      home: imputationResult.homeQuality,
+      away: imputationResult.awayQuality,
+      overall: imputationResult.overallConfidence
     },
-    overUnder25Goals: {
-      over: ((poissonWeight * overUnderCalculations.over25 + monteCarloWeight * simulation.over25Prob)) * 100,
-      under: (1 - (poissonWeight * overUnderCalculations.over25 + monteCarloWeight * simulation.over25Prob)) * 100,
-      prediction: (poissonWeight * overUnderCalculations.over25 + monteCarloWeight * simulation.over25Prob) > 0.5 ? 'OVER' : 'UNDER',
-      confidence: Math.round(calculateUltraSecureConfidence('over25', home, away, league, (poissonWeight * overUnderCalculations.over25 + monteCarloWeight * simulation.over25Prob))),
-      successRate: calculateDynamicSuccessRate('over25', home, away, league, (poissonWeight * overUnderCalculations.over25 + monteCarloWeight * simulation.over25Prob))
+    momentumAnalysis,
+    contextFactors: context,
+    psychologicalFactors,
+    realTimeData,
+    deepLearningPrediction,
+    realTimeImpact: {
+      riskFactors: realTimeImpact.riskFactors,
+      opportunities: realTimeImpact.opportunities
     },
-    btts: {
-      yes: simulation.bttsProb * 100,
-      no: simulation.noBttsProb * 100,
-      prediction: simulation.bttsProb > 0.5 ? 'YES' : 'NO',
-      confidence: Math.round(calculateUltraSecureConfidence('btts', home, away, league, simulation.bttsProb)),
-      successRate: calculateDynamicSuccessRate('btts', home, away, league, simulation.bttsProb)
-    },
-    corners: {
-      predicted: Math.round(simulation.expectedCorners),
-      confidence: Math.round(85 + (dataQuality - 50) * 0.2),
-      threshold: Math.round(simulation.expectedCorners - 0.5),
-      over: simulation.expectedCorners > (simulation.expectedCorners - 0.5) ? 65 : 35
-    },
-    throwIns: {
-      predicted: Math.round(simulation.expectedThrowIns),
-      confidence: Math.round(82 + (dataQuality - 50) * 0.15),
-      threshold: Math.round(simulation.expectedThrowIns - 0.5),
-      over: simulation.expectedThrowIns > (simulation.expectedThrowIns - 0.5) ? 62 : 38
-    },
-    fouls: {
-      predicted: Math.round(simulation.expectedFouls),
-      confidence: Math.round(78 + (dataQuality - 50) * 0.1),
-      threshold: Math.round(simulation.expectedFouls - 0.5),
-      over: simulation.expectedFouls > (simulation.expectedFouls - 0.5) ? 58 : 42
-    },
-    yellowCards: {
-      predicted: Math.round(simulation.expectedYellowCards),
-      confidence: Math.round(75 + (dataQuality - 50) * 0.1),
-      threshold: Math.round(simulation.expectedYellowCards - 0.5),
-      over: simulation.expectedYellowCards > (simulation.expectedYellowCards - 0.5) ? 55 : 45
-    },
-    redCards: {
-      predicted: Math.round(simulation.expectedRedCards * 10) / 10, // 1 décimale
-      confidence: Math.round(70 + (dataQuality - 50) * 0.1),
-      threshold: Math.round(simulation.expectedRedCards - 0.1),
-      over: simulation.expectedRedCards > (simulation.expectedRedCards - 0.1) ? 60 : 40
-    },
-    duels: {
-      predicted: Math.round(simulation.expectedDuels),
-      confidence: Math.round(80 + (dataQuality - 50) * 0.15),
-      threshold: Math.round(simulation.expectedDuels - 2),
-      over: simulation.expectedDuels > (simulation.expectedDuels - 2) ? 65 : 35
-    },
-    offsides: {
-      predicted: Math.round(simulation.expectedOffsides),
-      confidence: Math.round(75 + (dataQuality - 50) * 0.1),
-      threshold: Math.round(simulation.expectedOffsides - 0.5),
-      over: simulation.expectedOffsides > (simulation.expectedOffsides - 0.5) ? 60 : 40
-    },
-    goalKicks: {
-      predicted: Math.round(simulation.expectedGoalKicks),
-      confidence: Math.round(78 + (dataQuality - 50) * 0.12),
-      threshold: Math.round(simulation.expectedGoalKicks - 1),
-      over: simulation.expectedGoalKicks > (simulation.expectedGoalKicks - 1) ? 62 : 38
-    },
-    winProbabilities: {
-      home: simulation.homeWinProb * 100,
-      draw: simulation.drawProb * 100,
-      away: simulation.awayWinProb * 100
-    },
-    expectedGoals: {
-      home: Number(finalHomeGoals.toFixed(2)),
-      away: Number(finalAwayGoals.toFixed(2))
-    },
-    mostLikelyScorelines: simulation.topScorelines,
-    modelMetrics: {
-      confidence: finalConfidence,
-      dataQuality: Math.round(dataQuality),
-      modelAgreement: Math.round(modelAgreement),
-      statisticalSignificance: Math.round(significanceLevel * 100),
-      homeStrength: Math.round(homeAttackRating * homeDefenseRating * 100),
-      awayStrength: Math.round(awayAttackRating * awayDefenseRating * 100)
-    },
-    advancedMetrics: {
-      expectedShotsOnTarget: Math.round(simulation.expectedShotsOnTarget),
-      expectedBigChances: Math.round(simulation.expectedBigChances),
-      possessionPrediction: Math.round(home.possession + possessionFactor * 100),
-      intensityScore: Math.round((finalHomeGoals + finalAwayGoals) * 25),
-      valueRating: Math.round(significanceLevel * 20 + finalConfidence * 0.3)
-    }
+    psychologicalInsights: psychologicalImpact.psychologicalInsights,
+    safetyValidation: safetyValidation,
+    advancedMLPrediction: advancedMLPrediction,
+    optimizationResult: optimizationResult
   };
 }

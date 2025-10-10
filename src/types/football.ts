@@ -121,9 +121,21 @@ export interface MatchPrediction {
   };
 }
 
+export interface DataQuality {
+  score: number;
+  level: 'excellent' | 'good' | 'fair' | 'poor';
+  missingFields: string[];
+  recommendations: string[];
+}
+
 export interface AnalysisResult {
   homeTeam: TeamStats;
   awayTeam: TeamStats;
   prediction: MatchPrediction;
   confidence: number;
+  dataQuality?: {
+    home: DataQuality;
+    away: DataQuality;
+    overall: number;
+  };
 }
