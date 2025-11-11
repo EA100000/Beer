@@ -25,6 +25,7 @@ export interface TeamStats {
   offsidesPerMatch: number;
   goalKicksPerMatch: number;
   redCardsPerMatch: number;
+  foulsPerMatch: number; // AJOUTÉ: Fautes par match depuis SofaScore
 }
 
 export interface MatchPrediction {

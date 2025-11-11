@@ -1,0 +1,10 @@
+{
+  "total_analyzed": 113972,
+  "ultra_selective_strategies": {
+    "fouls": [
+      {
+        "description": "Domicile < 10 ET Exterieur < 10",
+        "threshold": 18.5,
+        "direction": "UNDER",
+        "matches": 9363,
+        "correct": 

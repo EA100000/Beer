@@ -1,0 +1,1209 @@
+{
+  "total_matches": 132411,
+  "markets_analyzed": [
+    "corners",
+    "yellow_cards",
+    "red_cards",
+    "shots",
+    "shots_on_target",
+    "fouls"
+  ],
+  "market_statistics": {
+    "corners": {
+      "mean": 10.15,
+      "median": 10.0,
+      "min": 0.0,
+      "max": 30.0,
+      "std_dev": 3.51
+    },
+    "yellow_cards": {
+      "mean": 3.92,
+      "median": 4.0,
+      "min": 0.0,
+      "max": 15.0,
+      "std_dev": 2.15
+    },
+    "red_cards": {
+      "mean": 0.22,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 10.0,
+      "std_dev": 0.49
+    },
+    "shots": {
+      "mean": 24.02,
+      "median": 24.0,
+      "min": 3.0,
+      "max": 54.0,
+      "std_dev": 6.14
+    },
+    "shots_on_target": {
+      "mean": 9.25,
+      "median": 9.0,
+      "min": 0.0,
+      "max": 33.0,
+      "std_dev": 3.64
+    },
+    "fouls": {
+      "mean": 26.82,
+      "median": 26.0,
+      "min": 0.0,
+      "max": 166.0,
+      "std_dev": 7.57
+    }
+  },
+  "all_predictions": [
+    {
+      "market": "shots",
+      "threshold": 18.5,
+      "prediction": "OVER 18.5",
+      "pattern": "odds_very_low",
+      "precision": 88.03,
+      "sample_size": 3993,
+      "avg_value": 25.99
+    },
+    {
+      "market": "shots_on_target",
+      "threshold": 6.5,
+      "prediction": "OVER 6.5",
+      "pattern": "odds_very_low",
+      "precision": 87.79,
+      "sample_size": 3963,
+      "avg_value": 10.6
+    },
+    {
+      "market": "shots",
+      "threshold": 18.5,
+      "prediction": "OVER 18.5",
+      "pattern": "odds_low",
+      "precision": 86.8,
+      "sample_size": 9195,
+      "avg_value": 25.52
+    },
+    {
+      "market": "yellow_cards",
+      "threshold": 5.5,
+      "prediction": "UNDER 5.5",
+      "pattern": "odds_very_low",
+      "precision": 86.06,
+      "sample_size": 3995,
+      "avg_value": 3.24
+    },
+    {
+      "market": "shots",
+      "threshold": 18.5,
+      "prediction": "OVER 18.5",
+      "pattern": "both_strong",
+      "precision": 86.0,
+      "sample_size": 25953,
+      "avg_value": 24.87
+    },
+    {
+      "market": "shots",
+      "threshold": 18.5,
+      "prediction": "OVER 18.5",
+      "pattern": "huge_elo_gap_300",
+      "precision": 85.8,
+      "sample_size": 3859,
+      "avg_value": 25.3
+    },
+    {
+      "market": "shots_on_target",
+      "threshold": 6.5,
+      "prediction": "OVER 6.5",
+      "pattern": "huge_elo_gap_300",
+      "precision": 85.27,
+      "sample_size": 3848,
+      "avg_value": 10.15
+    },
+    {
+      "market": "red_cards",
+      "threshold": 0.5,
+      "prediction": "UNDER 0.5",
+      "pattern": "odds_very_low",
+      "precision": 85.18,
+      "sample_size": 3995,
+      "avg_value": 0.16
+    },
+    {
+      "market": "shots",
+      "threshold": 18.5,
+      "prediction": "OVER 18.5",
+      "pattern": "big_elo_gap_200",
+      "precision": 85.03,
+      "sample_size": 11366,
+      "avg_value": 24.99
+    },
+    {
+      "market": "red_cards",
+      "threshold": 0.5,
+      "prediction": "UNDER 0.5",
+      "pattern": "huge_elo_gap_300",
+      "precision": 85.02,
+      "sample_size": 3859,
+      "avg_value": 0.17
+    },
+    {
+      "market": "shots_on_target",
+      "threshold": 6.5,
+      "prediction": "OVER 6.5",
+      "pattern": "odds_low",
+      "precision": 85.0,
+      "sample_size": 9099,
+      "avg_value": 10.24
+    },
+    {
+      "market": "red_cards",
+      "threshold": 0.5,
+      "prediction": "UNDER 0.5",
+      "pattern": "odds_low",
+      "precision": 84.74,
+      "sample_size": 9205,
+      "avg_value": 0.17
+    },
+    {
+      "market": "yellow_cards",
+      "threshold": 5.5,
+      "prediction": "UNDER 5.5",
+      "pattern": "odds_low",
+      "precision": 84.08,
+      "sample_size": 9205,
+      "avg_value": 3.44
+    },
+    {
+      "market": "red_cards",
+      "threshold": 0.5,
+      "prediction": "UNDER 0.5",
+      "pattern": "big_elo_gap_200",
+      "precision": 84.04,
+      "sample_size": 11372,
+      "avg_value": 0.18
+    },
+    {
+      "market": "shots",
+      "threshold": 18.5,
+      "prediction": "OVER 18.5",
+      "pattern": "moderate_elo_gap_100",
+      "precision": 83.38,
+      "sample_size": 32004,
+      "avg_value": 24.51
+    },
+    {
+      "market": "shots_on_target",
+      "threshold": 6.5,
+      "prediction": "OVER 6.5",
+      "pattern": "big_elo_gap_200",
+      "precision": 83.07,
+      "sample_size": 11267,
+      "avg_value": 9.97
+    },
+    {
+      "market": "red_cards",
+      "threshold": 0.5,
+      "prediction": "UNDER 0.5",
+      "pattern": "moderate_elo_gap_100",
+      "precision": 82.74,
+      "sample_size": 32055,
+      "avg_value": 0.2
+    },
+    {
+      "market": "yellow_cards",
+      "threshold": 5.5,
+      "prediction": "UNDER 5.5",
+      "pattern": "huge_elo_gap_300",
+      "precision": 82.64,
+      "sample_size": 3859,
+      "avg_value": 3.45
+    },
+    {
+      "market": "fouls",
+      "threshold": 20.5,
+      "prediction": "OVER 20.5",
+      "pattern": "balanced_match",
+      "precision": 82.57,
+      "sample_size": 46842,
+      "avg_value": 27.45
+    },
+    {
+      "market": "red_cards",
+      "threshold": 0.5,
+      "prediction": "UNDER 0.5",
+      "pattern": "both_strong",
+      "precision": 81.71,
+      "sample_size": 25960,
+      "avg_value": 0.21
+    },
+    {
+      "market": "yellow_cards",
+      "threshold": 5.5,
+      "prediction": "UNDER 5.5",
+      "pattern": "big_elo_gap_200",
+      "precision": 81.59,
+      "sample_size": 11372,
+      "avg_value": 3.6
+    },
+    {
+      "market": "fouls",
+      "threshold": 20.5,
+      "prediction": "OVER 20.5",
+      "pattern": "both_weak",
+      "precision": 81.14,
+      "sample_size": 17221,
+      "avg_value": 26.67
+    },
+    {
+      "market": "red_cards",
+      "threshold": 0.5,
+      "prediction": "UNDER 0.5",
+      "pattern": "both_weak",
+      "precision": 80.58,
+      "sample_size": 17243,
+      "avg_value": 0.22
+    },
+    {
+      "market": "shots_on_target",
+      "threshold": 6.5,
+      "prediction": "OVER 6.5",
+      "pattern": "both_strong",
+      "precision": 80.52,
+      "sample_size": 25543,
+      "avg_value": 9.64
+    },
+    {
+      "market": "red_cards",
+      "threshold": 0.5,
+      "prediction": "UNDER 0.5",
+      "pattern": "balanced_match",
+      "precision": 80.48,
+      "sample_size": 47500,
+      "avg_value": 0.23
+    },
+    {
+      "market": "shots",
+      "threshold": 20.5,
+      "prediction": "OVER 20.5",
+      "pattern": "odds_very_low",
+      "precision": 80.34,
+      "sample_size": 3993,
+      "avg_value": 25.99
+    },
+    {
+      "market": "shots",
+      "threshold": 18.5,
+      "prediction": "OVER 18.5",
+      "pattern": "balanced_match",
+      "precision": 80.29,
+      "sample_size": 47390,
+      "avg_value": 23.69
+    },
+    {
+      "market": "yellow_cards",
+      "threshold": 5.5,
+      "prediction": "UNDER 5.5",
+      "pattern": "moderate_elo_gap_100",
+      "precision": 80.03,
+      "sample_size": 32054,
+      "avg_value": 3.76
+    },
+    {
+      "market": "shots_on_target",
+      "threshold": 6.5,
+      "prediction": "OVER 6.5",
+      "pattern": "moderate_elo_gap_100",
+      "precision": 79.8,
+      "sample_size": 31665,
+      "avg_value": 9.59
+    },
+    {
+      "market": "shots_on_target",
+      "threshold": 7.5,
+      "prediction": "OVER 7.5",
+      "pattern": "odds_very_low",
+      "precision": 79.26,
+      "sample_size": 3963,
+      "avg_value": 10.6
+    },
+    {
+      "market": "fouls",
+      "threshold": 20.5,
+      "prediction": "OVER 20.5",
+      "pattern": "both_strong",
+      "precision": 79.18,
+      "sample_size": 25376,
+      "avg_value": 27.12
+    },
+    {
+      "market": "shots",
+      "threshold": 20.5,
+      "prediction": "OVER 20.5",
+      "pattern": "odds_low",
+      "precision": 78.42,
+      "sample_size": 9195,
+      "avg_value": 25.52
+    },
+    {
+      "market": "yellow_cards",
+      "threshold": 5.5,
+      "prediction": "UNDER 5.5",
+      "pattern": "both_weak",
+      "precision": 78.35,
+      "sample_size": 17244,
+      "avg_value": 3.91
+    },
+    {
+      "market": "corners",
+      "threshold": 12.5,
+      "prediction": "UNDER 12.5",
+      "pattern": "both_weak",
+      "precision": 76.83,
+      "sample_size": 17222,
+      "avg_value": 10.04
+    },
+    {
+      "market": "yellow_cards",
+      "threshold": 5.5,
+      "prediction": "UNDER 5.5",
+      "pattern": "both_strong",
+      "precision": 76.8,
+      "sample_size": 25959,
+      "avg_value": 3.99
+    },
+    {
+      "market": "shots",
+      "threshold": 20.5,
+      "prediction": "OVER 20.5",
+      "pattern": "huge_elo_gap_300",
+      "precision": 76.76,
+      "sample_size": 3859,
+      "avg_value": 25.3
+    },
+    {
+      "market": "corners",
+      "threshold": 12.5,
+      "prediction": "UNDER 12.5",
+      "pattern": "balanced_match",
+      "precision": 76.67,
+      "sample_size": 47121,
+      "avg_value": 10.09
+    },
+    {
+      "market": "shots_on_target",
+      "threshold": 7.5,
+      "prediction": "OVER 7.5",
+      "pattern": "huge_elo_gap_300",
+      "precision": 76.61,
+      "sample_size": 3848,
+      "avg_value": 10.15
+    },
+    {
+      "market": "yellow_cards",
+      "threshold": 5.5,
+      "prediction": "UNDER 5.5",
+      "pattern": "balanced_match",
+      "precision": 76.54,
+      "sample_size": 47501,
+      "avg_value": 4.04
+    },
+    {
+      "market": "shots",
+      "threshold": 20.5,
+      "prediction": "OVER 20.5",
+      "pattern": "both_strong",
+      "precision": 76.14,
+      "sample_size": 25953,
+      "avg_value": 24.87
+    },
+    {
+      "market": "shots_on_target",
+      "threshold": 7.5,
+      "prediction": "OVER 7.5",
+      "pattern": "odds_low",
+      "precision": 75.9,
+      "sample_size": 9099,
+      "avg_value": 10.24
+    },
+    {
+      "market": "fouls",
+      "threshold": 20.5,
+      "prediction": "OVER 20.5",
+      "pattern": "moderate_elo_gap_100",
+      "precision": 75.77,
+      "sample_size": 31791,
+      "avg_value": 25.9
+    },
+    {
+      "market": "yellow_cards",
+      "threshold": 4.5,
+      "prediction": "UNDER 4.5",
+      "pattern": "odds_very_low",
+      "precision": 75.72,
+      "sample_size": 3995,
+      "avg_value": 3.24
+    },
+    {
+      "market": "corners",
+      "threshold": 12.5,
+      "prediction": "UNDER 12.5",
+      "pattern": "both_strong",
+      "precision": 75.57,
+      "sample_size": 25640,
+      "avg_value": 10.2
+    },
+    {
+      "market": "shots",
+      "threshold": 20.5,
+      "prediction": "OVER 20.5",
+      "pattern": "big_elo_gap_200",
+      "precision": 75.52,
+      "sample_size": 11366,
+      "avg_value": 24.99
+    },
+    {
+      "market": "corners",
+      "threshold": 12.5,
+      "prediction": "UNDER 12.5",
+      "pattern": "moderate_elo_gap_100",
+      "precision": 75.22,
+      "sample_size": 31898,
+      "avg_value": 10.23
+    },
+    {
+      "market": "shots_on_target",
+      "threshold": 6.5,
+      "prediction": "OVER 6.5",
+      "pattern": "balanced_match",
+      "precision": 75.22,
+      "sample_size": 46923,
+      "avg_value": 9.02
+    },
+    {
+      "market": "yellow_cards",
+      "threshold": 2.5,
+      "prediction": "OVER 2.5",
+      "pattern": "balanced_match",
+      "precision": 74.95,
+      "sample_size": 47501,
+      "avg_value": 4.04
+    },
+    {
+      "market": "shots",
+      "threshold": 18.5,
+      "prediction": "OVER 18.5",
+      "pattern": "both_weak",
+      "precision": 74.88,
+      "sample_size": 17222,
+      "avg_value": 22.89
+    },
+    {
+      "market": "corners",
+      "threshold": 12.5,
+      "prediction": "UNDER 12.5",
+      "pattern": "big_elo_gap_200",
+      "precision": 74.74,
+      "sample_size": 11339,
+      "avg_value": 10.27
+    }
+  ],
+  "predictions_by_market": {
+    "corners": {
+      "8.5": [
+        {
+          "type": "OVER 8.5",
+          "precision": 68.95,
+          "pattern": "huge_elo_gap_300",
+          "sample_size": 3852,
+          "avg_value": 10.42
+        },
+        {
+          "type": "OVER 8.5",
+          "precision": 67.25,
+          "pattern": "big_elo_gap_200",
+          "sample_size": 11339,
+          "avg_value": 10.27
+        },
+        {
+          "type": "OVER 8.5",
+          "precision": 66.83,
+          "pattern": "moderate_elo_gap_100",
+          "sample_size": 31898,
+          "avg_value": 10.23
+        },
+        {
+          "type": "OVER 8.5",
+          "precision": 71.9,
+          "pattern": "odds_very_low",
+          "sample_size": 3990,
+          "avg_value": 10.75
+        },
+        {
+          "type": "OVER 8.5",
+          "precision": 70.47,
+          "pattern": "odds_low",
+          "sample_size": 9178,
+          "avg_value": 10.57
+        },
+        {
+          "type": "OVER 8.5",
+          "precision": 66.71,
+          "pattern": "both_strong",
+          "sample_size": 25640,
+          "avg_value": 10.2
+        },
+        {
+          "type": "OVER 8.5",
+          "precision": 65.85,
+          "pattern": "balanced_match",
+          "sample_size": 47121,
+          "avg_value": 10.09
+        }
+      ],
+      "9.5": [],
+      "10.5": [],
+      "11.5": [
+        {
+          "type": "UNDER 11.5",
+          "precision": 66.06,
+          "pattern": "big_elo_gap_200",
+          "sample_size": 11339,
+          "avg_value": 10.27
+        },
+        {
+          "type": "UNDER 11.5",
+          "precision": 66.1,
+          "pattern": "moderate_elo_gap_100",
+          "sample_size": 31898,
+          "avg_value": 10.23
+        },
+        {
+          "type": "UNDER 11.5",
+          "precision": 66.81,
+          "pattern": "both_strong",
+          "sample_size": 25640,
+          "avg_value": 10.2
+        },
+        {
+          "type": "UNDER 11.5",
+          "precision": 67.83,
+          "pattern": "both_weak",
+          "sample_size": 17222,
+          "avg_value": 10.04
+        },
+        {
+          "type": "UNDER 11.5",
+          "precision": 67.81,
+          "pattern": "balanced_match",
+          "sample_size": 47121,
+          "avg_value": 10.09
+        }
+      ],
+      "12.5": [
+        {
+          "type": "UNDER 12.5",
+          "precision": 72.9,
+          "pattern": "huge_elo_gap_300",
+          "sample_size": 3852,
+          "avg_value": 10.42
+        },
+        {
+          "type": "UNDER 12.5",
+          "precision": 74.74,
+          "pattern": "big_elo_gap_200",
+          "sample_size": 11339,
+          "avg_value": 10.27
+        },
+        {
+          "type": "UNDER 12.5",
+          "precision": 75.22,
+          "pattern": "moderate_elo_gap_100",
+          "sample_size": 31898,
+          "avg_value": 10.23
+        },
+        {
+          "type": "UNDER 12.5",
+          "precision": 70.38,
+          "pattern": "odds_very_low",
+          "sample_size": 3990,
+          "avg_value": 10.75
+        },
+        {
+          "type": "UNDER 12.5",
+          "precision": 71.97,
+          "pattern": "odds_low",
+          "sample_size": 9178,
+          "avg_value": 10.57
+        },
+        {
+          "type": "UNDER 12.5",
+          "precision": 75.57,
+          "pattern": "both_strong",
+          "sample_size": 25640,
+          "avg_value": 10.2
+        },
+        {
+          "type": "UNDER 12.5",
+          "precision": 76.83,
+          "pattern": "both_weak",
+          "sample_size": 17222,
+          "avg_value": 10.04
+        },
+        {
+          "type": "UNDER 12.5",
+          "precision": 76.67,
+          "pattern": "balanced_match",
+          "sample_size": 47121,
+          "avg_value": 10.09
+        }
+      ]
+    },
+    "yellow_cards": {
+      "2.5": [
+        {
+          "type": "OVER 2.5",
+          "precision": 66.44,
+          "pattern": "big_elo_gap_200",
+          "sample_size": 11372,
+          "avg_value": 3.6
+        },
+        {
+          "type": "OVER 2.5",
+          "precision": 70.29,
+          "pattern": "moderate_elo_gap_100",
+          "sample_size": 32054,
+          "avg_value": 3.76
+        },
+        {
+          "type": "OVER 2.5",
+          "precision": 74.07,
+          "pattern": "both_strong",
+          "sample_size": 25959,
+          "avg_value": 3.99
+        },
+        {
+          "type": "OVER 2.5",
+          "precision": 72.73,
+          "pattern": "both_weak",
+          "sample_size": 17244,
+          "avg_value": 3.91
+        },
+        {
+          "type": "OVER 2.5",
+          "precision": 74.95,
+          "pattern": "balanced_match",
+          "sample_size": 47501,
+          "avg_value": 4.04
+        }
+      ],
+      "3.5": [],
+      "4.5": [
+        {
+          "type": "UNDER 4.5",
+          "precision": 72.25,
+          "pattern": "huge_elo_gap_300",
+          "sample_size": 3859,
+          "avg_value": 3.45
+        },
+        {
+          "type": "UNDER 4.5",
+          "precision": 69.07,
+          "pattern": "big_elo_gap_200",
+          "sample_size": 11372,
+          "avg_value": 3.6
+        },
+        {
+          "type": "UNDER 4.5",
+          "precision": 66.26,
+          "pattern": "moderate_elo_gap_100",
+          "sample_size": 32054,
+          "avg_value": 3.76
+        },
+        {
+          "type": "UNDER 4.5",
+          "precision": 75.72,
+          "pattern": "odds_very_low",
+          "sample_size": 3995,
+          "avg_value": 3.24
+        },
+        {
+          "type": "UNDER 4.5",
+          "precision": 71.98,
+          "pattern": "odds_low",
+          "sample_size": 9205,
+          "avg_value": 3.44
+        }
+      ],
+      "5.5": [
+        {
+          "type": "UNDER 5.5",
+          "precision": 82.64,
+          "pattern": "huge_elo_gap_300",
+          "sample_size": 3859,
+          "avg_value": 3.45
+        },
+        {
+          "type": "UNDER 5.5",
+          "precision": 81.59,
+          "pattern": "big_elo_gap_200",
+          "sample_size": 11372,
+          "avg_value": 3.6
+        },
+        {
+          "type": "UNDER 5.5",
+          "precision": 80.03,
+          "pattern": "moderate_elo_gap_100",
+          "sample_size": 32054,
+          "avg_value": 3.76
+        },
+        {
+          "type": "UNDER 5.5",
+          "precision": 86.06,
+          "pattern": "odds_very_low",
+          "sample_size": 3995,
+          "avg_value": 3.24
+        },
+        {
+          "type": "UNDER 5.5",
+          "precision": 84.08,
+          "pattern": "odds_low",
+          "sample_size": 9205,
+          "avg_value": 3.44
+        },
+        {
+          "type": "UNDER 5.5",
+          "precision": 76.8,
+          "pattern": "both_strong",
+          "sample_size": 25959,
+          "avg_value": 3.99
+        },
+        {
+          "type": "UNDER 5.5",
+          "precision": 78.35,
+          "pattern": "both_weak",
+          "sample_size": 17244,
+          "avg_value": 3.91
+        },
+        {
+          "type": "UNDER 5.5",
+          "precision": 76.54,
+          "pattern": "balanced_match",
+          "sample_size": 47501,
+          "avg_value": 4.04
+        }
+      ]
+    },
+    "red_cards": {
+      "0.5": [
+        {
+          "type": "UNDER 0.5",
+          "precision": 85.02,
+          "pattern": "huge_elo_gap_300",
+          "sample_size": 3859,
+          "avg_value": 0.17
+        },
+        {
+          "type": "UNDER 0.5",
+          "precision": 84.04,
+          "pattern": "big_elo_gap_200",
+          "sample_size": 11372,
+          "avg_value": 0.18
+        },
+        {
+          "type": "UNDER 0.5",
+          "precision": 82.74,
+          "pattern": "moderate_elo_gap_100",
+          "sample_size": 32055,
+          "avg_value": 0.2
+        },
+        {
+          "type": "UNDER 0.5",
+          "precision": 85.18,
+          "pattern": "odds_very_low",
+          "sample_size": 3995,
+          "avg_value": 0.16
+        },
+        {
+          "type": "UNDER 0.5",
+          "precision": 84.74,
+          "pattern": "odds_low",
+          "sample_size": 9205,
+          "avg_value": 0.17
+        },
+        {
+          "type": "UNDER 0.5",
+          "precision": 81.71,
+          "pattern": "both_strong",
+          "sample_size": 25960,
+          "avg_value": 0.21
+        },
+        {
+          "type": "UNDER 0.5",
+          "precision": 80.58,
+          "pattern": "both_weak",
+          "sample_size": 17243,
+          "avg_value": 0.22
+        },
+        {
+          "type": "UNDER 0.5",
+          "precision": 80.48,
+          "pattern": "balanced_match",
+          "sample_size": 47500,
+          "avg_value": 0.23
+        }
+      ]
+    },
+    "shots": {
+      "18.5": [
+        {
+          "type": "OVER 18.5",
+          "precision": 85.8,
+          "pattern": "huge_elo_gap_300",
+          "sample_size": 3859,
+          "avg_value": 25.3
+        },
+        {
+          "type": "OVER 18.5",
+          "precision": 85.03,
+          "pattern": "big_elo_gap_200",
+          "sample_size": 11366,
+          "avg_value": 24.99
+        },
+        {
+          "type": "OVER 18.5",
+          "precision": 83.38,
+          "pattern": "moderate_elo_gap_100",
+          "sample_size": 32004,
+          "avg_value": 24.51
+        },
+        {
+          "type": "OVER 18.5",
+          "precision": 88.03,
+          "pattern": "odds_very_low",
+          "sample_size": 3993,
+          "avg_value": 25.99
+        },
+        {
+          "type": "OVER 18.5",
+          "precision": 86.8,
+          "pattern": "odds_low",
+          "sample_size": 9195,
+          "avg_value": 25.52
+        },
+        {
+          "type": "OVER 18.5",
+          "precision": 86.0,
+          "pattern": "both_strong",
+          "sample_size": 25953,
+          "avg_value": 24.87
+        },
+        {
+          "type": "OVER 18.5",
+          "precision": 74.88,
+          "pattern": "both_weak",
+          "sample_size": 17222,
+          "avg_value": 22.89
+        },
+        {
+          "type": "OVER 18.5",
+          "precision": 80.29,
+          "pattern": "balanced_match",
+          "sample_size": 47390,
+          "avg_value": 23.69
+        }
+      ],
+      "20.5": [
+        {
+          "type": "OVER 20.5",
+          "precision": 76.76,
+          "pattern": "huge_elo_gap_300",
+          "sample_size": 3859,
+          "avg_value": 25.3
+        },
+        {
+          "type": "OVER 20.5",
+          "precision": 75.52,
+          "pattern": "big_elo_gap_200",
+          "sample_size": 11366,
+          "avg_value": 24.99
+        },
+        {
+          "type": "OVER 20.5",
+          "precision": 73.37,
+          "pattern": "moderate_elo_gap_100",
+          "sample_size": 32004,
+          "avg_value": 24.51
+        },
+        {
+          "type": "OVER 20.5",
+          "precision": 80.34,
+          "pattern": "odds_very_low",
+          "sample_size": 3993,
+          "avg_value": 25.99
+        },
+        {
+          "type": "OVER 20.5",
+          "precision": 78.42,
+          "pattern": "odds_low",
+          "sample_size": 9195,
+          "avg_value": 25.52
+        },
+        {
+          "type": "OVER 20.5",
+          "precision": 76.14,
+          "pattern": "both_strong",
+          "sample_size": 25953,
+          "avg_value": 24.87
+        },
+        {
+          "type": "OVER 20.5",
+          "precision": 69.25,
+          "pattern": "balanced_match",
+          "sample_size": 47390,
+          "avg_value": 23.69
+        }
+      ],
+      "22.5": [
+        {
+          "type": "OVER 22.5",
+          "precision": 65.79,
+          "pattern": "huge_elo_gap_300",
+          "sample_size": 3859,
+          "avg_value": 25.3
+        },
+        {
+          "type": "OVER 22.5",
+          "precision": 69.8,
+          "pattern": "odds_very_low",
+          "sample_size": 3993,
+          "avg_value": 25.99
+        },
+        {
+          "type": "OVER 22.5",
+          "precision": 67.16,
+          "pattern": "odds_low",
+          "sample_size": 9195,
+          "avg_value": 25.52
+        }
+      ],
+      "24.5": []
+    },
+    "shots_on_target": {
+      "6.5": [
+        {
+          "type": "OVER 6.5",
+          "precision": 85.27,
+          "pattern": "huge_elo_gap_300",
+          "sample_size": 3848,
+          "avg_value": 10.15
+        },
+        {
+          "type": "OVER 6.5",
+          "precision": 83.07,
+          "pattern": "big_elo_gap_200",
+          "sample_size": 11267,
+          "avg_value": 9.97
+        },
+        {
+          "type": "OVER 6.5",
+          "precision": 79.8,
+          "pattern": "moderate_elo_gap_100",
+          "sample_size": 31665,
+          "avg_value": 9.59
+        },
+        {
+          "type": "OVER 6.5",
+          "precision": 87.79,
+          "pattern": "odds_very_low",
+          "sample_size": 3963,
+          "avg_value": 10.6
+        },
+        {
+          "type": "OVER 6.5",
+          "precision": 85.0,
+          "pattern": "odds_low",
+          "sample_size": 9099,
+          "avg_value": 10.24
+        },
+        {
+          "type": "OVER 6.5",
+          "precision": 80.52,
+          "pattern": "both_strong",
+          "sample_size": 25543,
+          "avg_value": 9.64
+        },
+        {
+          "type": "OVER 6.5",
+          "precision": 73.44,
+          "pattern": "both_weak",
+          "sample_size": 17222,
+          "avg_value": 8.82
+        },
+        {
+          "type": "OVER 6.5",
+          "precision": 75.22,
+          "pattern": "balanced_match",
+          "sample_size": 46923,
+          "avg_value": 9.02
+        }
+      ],
+      "7.5": [
+        {
+          "type": "OVER 7.5",
+          "precision": 76.61,
+          "pattern": "huge_elo_gap_300",
+          "sample_size": 3848,
+          "avg_value": 10.15
+        },
+        {
+          "type": "OVER 7.5",
+          "precision": 73.6,
+          "pattern": "big_elo_gap_200",
+          "sample_size": 11267,
+          "avg_value": 9.97
+        },
+        {
+          "type": "OVER 7.5",
+          "precision": 69.52,
+          "pattern": "moderate_elo_gap_100",
+          "sample_size": 31665,
+          "avg_value": 9.59
+        },
+        {
+          "type": "OVER 7.5",
+          "precision": 79.26,
+          "pattern": "odds_very_low",
+          "sample_size": 3963,
+          "avg_value": 10.6
+        },
+        {
+          "type": "OVER 7.5",
+          "precision": 75.9,
+          "pattern": "odds_low",
+          "sample_size": 9099,
+          "avg_value": 10.24
+        },
+        {
+          "type": "OVER 7.5",
+          "precision": 70.36,
+          "pattern": "both_strong",
+          "sample_size": 25543,
+          "avg_value": 9.64
+        }
+      ],
+      "8.5": [
+        {
+          "type": "OVER 8.5",
+          "precision": 65.31,
+          "pattern": "huge_elo_gap_300",
+          "sample_size": 3848,
+          "avg_value": 10.15
+        },
+        {
+          "type": "OVER 8.5",
+          "precision": 69.14,
+          "pattern": "odds_very_low",
+          "sample_size": 3963,
+          "avg_value": 10.6
+        },
+        {
+          "type": "OVER 8.5",
+          "precision": 65.29,
+          "pattern": "odds_low",
+          "sample_size": 9099,
+          "avg_value": 10.24
+        }
+      ],
+      "9.5": []
+    },
+    "fouls": {
+      "20.5": [
+        {
+          "type": "OVER 20.5",
+          "precision": 69.63,
+          "pattern": "big_elo_gap_200",
+          "sample_size": 11311,
+          "avg_value": 24.66
+        },
+        {
+          "type": "OVER 20.5",
+          "precision": 75.77,
+          "pattern": "moderate_elo_gap_100",
+          "sample_size": 31791,
+          "avg_value": 25.9
+        },
+        {
+          "type": "OVER 20.5",
+          "precision": 70.02,
+          "pattern": "odds_low",
+          "sample_size": 9154,
+          "avg_value": 24.81
+        },
+        {
+          "type": "OVER 20.5",
+          "precision": 79.18,
+          "pattern": "both_strong",
+          "sample_size": 25376,
+          "avg_value": 27.12
+        },
+        {
+          "type": "OVER 20.5",
+          "precision": 81.14,
+          "pattern": "both_weak",
+          "sample_size": 17221,
+          "avg_value": 26.67
+        },
+        {
+          "type": "OVER 20.5",
+          "precision": 82.57,
+          "pattern": "balanced_match",
+          "sample_size": 46842,
+          "avg_value": 27.45
+        }
+      ],
+      "22.5": [
+        {
+          "type": "OVER 22.5",
+          "precision": 69.68,
+          "pattern": "both_strong",
+          "sample_size": 25376,
+          "avg_value": 27.12
+        },
+        {
+          "type": "OVER 22.5",
+          "precision": 71.11,
+          "pattern": "both_weak",
+          "sample_size": 17221,
+          "avg_value": 26.67
+        },
+        {
+          "type": "OVER 22.5",
+          "precision": 73.37,
+          "pattern": "balanced_match",
+          "sample_size": 46842,
+          "avg_value": 27.45
+        }
+      ],
+      "24.5": [],
+      "26.5": [
+        {
+          "type": "UNDER 26.5",
+          "precision": 69.33,
+          "pattern": "huge_elo_gap_300",
+          "sample_size": 3844,
+          "avg_value": 23.43
+        },
+        {
+          "type": "UNDER 26.5",
+          "precision": 68.77,
+          "pattern": "odds_very_low",
+          "sample_size": 3987,
+          "avg_value": 23.6
+        }
+      ]
+    }
+  },
+  "summary": {
+    "total_predictions_found": 92,
+    "excellent_predictions": 28,
+    "good_predictions": 39,
+    "acceptable_predictions": 25
+  }
+}

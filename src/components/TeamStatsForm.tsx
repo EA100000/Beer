@@ -21,7 +21,18 @@ interface TeamStatsFormProps {
 
 export function TeamStatsForm({ team, teamLabel, onChange }: TeamStatsFormProps) {
   const handleChange = (field: keyof TeamStats, value: string) => {
-    const numValue = field === 'name' ? value : parseFloat(value) || 0;
+    // Permettre 0 comme valeur valide
+    let numValue: any;
+    if (field === 'name') {
+      numValue = value;
+    } else {
+      // Si vide, mettre 0, sinon parser la valeur
+      numValue = value === '' ? 0 : parseFloat(value);
+      // Si NaN après parsing, mettre 0
+      if (isNaN(numValue)) {
+        numValue = 0;
+      }
+    }
     onChange({
       ...team,
       [field]: numValue
@@ -238,14 +249,23 @@ export function TeamStatsForm({ team, teamLabel, onChange }: TeamStatsFormProps)
       importance: 'low',
       description: 'Moyenne de coups de pied de but par match'
     },
-    { 
-      key: 'redCardsPerMatch', 
-      label: 'Cartons rouges/match', 
-      type: 'number', 
+    {
+      key: 'redCardsPerMatch',
+      label: 'Cartons rouges/match',
+      type: 'number',
       step: '0.1',
       required: false,
       importance: 'medium',
       description: 'Moyenne de cartons rouges par match'
+    },
+    {
+      key: 'foulsPerMatch',
+      label: 'Fautes/match',
+      type: 'number',
+      step: '0.1',
+      required: false,
+      importance: 'high',
+      description: 'Moyenne de fautes commises par match'
     }
   ];
 
@@ -323,8 +343,10 @@ export function TeamStatsForm({ team, teamLabel, onChange }: TeamStatsFormProps)
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {inputFields.map(({ key, label, type, step, required, importance, description }) => {
-            const hasValue = team[key as keyof TeamStats] && team[key as keyof TeamStats] !== 0;
-            const isEmpty = !team[key as keyof TeamStats] || team[key as keyof TeamStats] === 0;
+            // Permettre 0 comme valeur valide - seul '' ou undefined sont considérés comme vides
+            const fieldValue = team[key as keyof TeamStats];
+            const hasValue = fieldValue !== undefined && fieldValue !== '' && fieldValue !== null;
+            const isEmpty = fieldValue === undefined || fieldValue === '' || fieldValue === null;
             
             return (
               <div key={key} className="space-y-2">
@@ -356,16 +378,35 @@ export function TeamStatsForm({ team, teamLabel, onChange }: TeamStatsFormProps)
                   id={`${teamLabel}-${key}`}
                   type={type}
                   step={step}
-                  value={team[key as keyof TeamStats] || ''}
+                  value={team[key as keyof TeamStats] ?? ''}
                   onChange={(e) => handleChange(key as keyof TeamStats, e.target.value)}
+                  onKeyDown={(e) => {
+                    // Permettre Tab et Enter pour passer au champ suivant
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const form = e.currentTarget.form;
+                      if (form) {
+                        const inputs = Array.from(form.elements).filter(
+                          (el): el is HTMLInputElement => el.tagName === 'INPUT'
+                        );
+                        const currentIndex = inputs.indexOf(e.currentTarget);
+                        const nextInput = inputs[currentIndex + 1];
+                        if (nextInput) {
+                          nextInput.focus();
+                          nextInput.select();
+                        }
+                      }
+                    }
+                  }}
                   className={`transition-all duration-200 focus:ring-2 focus:ring-primary/50 border-primary/30 bg-background/80 ${
-                    hasValue 
-                      ? 'border-green-300 bg-green-50/50' 
+                    hasValue
+                      ? 'border-green-300 bg-green-50/50'
                       : isEmpty && importance === 'critical'
                       ? 'border-orange-300 bg-orange-50/50'
                       : 'border-gray-300'
                   }`}
                   placeholder={required ? `Obligatoire: ${label.toLowerCase()}` : `Optionnel: ${label.toLowerCase()}`}
+                  min={type === 'number' ? '0' : undefined}
                 />
                 
                 <div className="text-xs text-muted-foreground">

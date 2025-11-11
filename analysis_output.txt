@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "c:\Users\HP\OneDrive\Documents\Pari365\analyze_real_data.py", line 12, in <module>
+    print("\U0001f50d ANALYSE APPROFONDIE DES DONNÉES RÉELLES")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f50d' in position 0: character maps to <undefined>

@@ -1,0 +1,120 @@
+{
+  "total_matches_analyzed": 132411,
+  "patterns_tested": 10,
+  "all_patterns_stats": {
+    "huge_elo_gap_250": {
+      "description": "Elo diff > 250",
+      "sample_size": 9814,
+      "favorite_win_rate": 74.67,
+      "over25_rate": 60.41,
+      "btts_rate": 47.95,
+      "avg_goals": 3.14,
+      "profitable": null
+    },
+    "big_elo_gap_200": {
+      "description": "Elo diff > 200",
+      "sample_size": 17200,
+      "favorite_win_rate": 69.92,
+      "over25_rate": 58.54,
+      "btts_rate": 49.4,
+      "avg_goals": 3.04,
+      "profitable": null
+    },
+    "big_elo_gap_150": {
+      "description": "Elo diff > 150",
+      "sample_size": 29605,
+      "favorite_win_rate": 64.69,
+      "over25_rate": 56.02,
+      "btts_rate": 50.06,
+      "avg_goals": 2.92,
+      "profitable": null
+    },
+    "moderate_elo_home": {
+      "description": "Elo diff > 100 + domicile",
+      "sample_size": 25684,
+      "favorite_win_rate": 67.74,
+      "over25_rate": 55.97,
+      "btts_rate": 49.29,
+      "avg_goals": 2.93,
+      "profitable": null
+    },
+    "both_weak": {
+      "description": "Les 2 equipes Elo < 1400",
+      "sample_size": 10100,
+      "favorite_win_rate": 18.54,
+      "over25_rate": 47.63,
+      "btts_rate": 52.14,
+      "avg_goals": 2.57,
+      "profitable": null
+    },
+    "both_strong": {
+      "description": "Les 2 equipes Elo > 1700",
+      "sample_size": 8667,
+      "favorite_win_rate": 33.29,
+      "over25_rate": 52.69,
+      "btts_rate": 54.63,
+      "avg_goals": 2.8,
+      "profitable": null
+    },
+    "excellent_home_form": {
+      "description": "Forme domicile > 2.5",
+      "sample_size": 41678,
+      "favorite_win_rate": 61.91,
+      "over25_rate": 53.01,
+      "btts_rate": 50.21,
+      "avg_goals": 2.8,
+      "profitable": null
+    },
+    "excellent_away_form": {
+      "description": "Forme exterieur > 2.0",
+      "sample_size": 50072,
+      "favorite_win_rate": 35.92,
+      "over25_rate": 47.94,
+      "btts_rate": 52.15,
+      "avg_goals": 2.58,
+      "profitable": null
+    },
+    "very_low_odds": {
+      "description": "Cote favorite < 1.3",
+      "sample_size": 6309,
+      "favorite_win_rate": 82.12,
+      "over25_rate": 64.73,
+      "btts_rate": 45.4,
+      "avg_goals": 3.32,
+      "profitable": null
+    },
+    "low_odds": {
+      "description": "Cote favorite < 1.5",
+      "sample_size": 14910,
+      "favorite_win_rate": 74.15,
+      "over25_rate": 60.76,
+      "btts_rate": 48.16,
+      "avg_goals": 3.12,
+      "profitable": null
+    }
+  },
+  "high_precision_patterns": [
+    {
+      "pattern": "very_low_odds",
+      "prediction": "VICTOIRE FAVORI",
+      "precision": 82.12,
+      "sample_size": 6309,
+      "description": "Cote favorite < 1.3"
+    },
+    {
+      "pattern": "huge_elo_gap_250",
+      "prediction": "VICTOIRE FAVORI",
+      "precision": 74.67,
+      "sample_size": 9814,
+      "description": "Elo diff > 250"
+    },
+    {
+      "pattern": "low_odds",
+      "prediction": "VICTOIRE FAVORI",
+      "precision": 74.15,
+      "sample_size": 14910,
+      "description": "Cote favorite < 1.5"
+    }
+  ],
+  "methodology": "Analyse statistique rigoureuse sur donnees reelles"
+}

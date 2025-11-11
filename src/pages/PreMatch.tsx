@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TeamStatsForm } from '@/components/TeamStatsForm';
 import { AnalysisResults } from '@/components/AnalysisResults';
 import { LowRiskPredictions } from '@/components/LowRiskPredictions';
 import { DataRequirements } from '@/components/DataRequirements';
-import { ComprehensivePredictions } from '@/components/ComprehensivePredictions';
+// import { ComprehensivePredictions } from '@/components/ComprehensivePredictions'; // Temporairement désactivé
 import { ValidationMetrics } from '@/components/ValidationMetrics';
 import { SystemImprovements } from '@/components/SystemImprovements';
 import { PerfectPredictions } from '@/components/PerfectPredictions';
@@ -14,12 +15,17 @@ import { UltraPrecisePredictions } from '@/components/UltraPrecisePredictions';
 import { DataQualityIndicator } from '@/components/DataQualityIndicator';
 import { PredictionFailureAnalysis } from '@/components/PredictionFailureAnalysis';
 import { AdvancedImprovements } from '@/components/AdvancedImprovements';
-import { PredictionSafetyGuard } from '@/components/PredictionSafetyGuard';
 import { PrecisionImprovementRoadmap } from '@/components/PrecisionImprovementRoadmap';
+import { PerfectBetsDisplay } from '@/components/PerfectBetsDisplay';
+import { Top10PredictionsPanel } from '@/components/Top10PredictionsPanel';
+import { SofaScoreURLInput } from '@/components/SofaScoreURLInput';
+import { SofaScoreTextInput } from '@/components/SofaScoreTextInput';
+import { EnhancedOverUnderDisplay } from '@/components/EnhancedOverUnderDisplay';
 import { TeamStats, AnalysisResult } from '@/types/football';
 import { analyzeMatch } from '@/utils/footballAnalysis';
-import { generateCombinedLowRiskPredictions } from '@/utils/lowRiskPredictions';
-import { Activity, BarChart3, Brain } from 'lucide-react';
+import { generatePerfectPredictions, PerfectPrediction } from '@/utils/perfectPredictions';
+import { generateAllOverUnderPredictions, OverUnderPrediction } from '@/utils/enhancedOverUnder';
+import { Activity, BarChart3, Brain, ArrowLeft } from 'lucide-react';
 import heroImage from '@/assets/hero-football-analysis.jpg';
 
 const defaultTeamStats: TeamStats = {
@@ -48,15 +54,19 @@ const defaultTeamStats: TeamStats = {
   offsidesPerMatch: 0,
   goalKicksPerMatch: 0,
   redCardsPerMatch: 0,
+  foulsPerMatch: 0,
 };
 
 const Index = () => {
+  const navigate = useNavigate();
   const [homeTeam, setHomeTeam] = useState<TeamStats>(defaultTeamStats);
   const [awayTeam, setAwayTeam] = useState<TeamStats>(defaultTeamStats);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [lowRiskPredictions, setLowRiskPredictions] = useState<any[]>([]);
   const [combinedPredictions, setCombinedPredictions] = useState<any[]>([]);
+  const [perfectBets, setPerfectBets] = useState<PerfectPrediction[]>([]);
+  const [overUnderPredictions, setOverUnderPredictions] = useState<OverUnderPrediction[]>([]);
 
   const handleAnalyze = async () => {
     if (!homeTeam.name || !awayTeam.name) {
@@ -65,12 +75,12 @@ const Index = () => {
     }
 
     setIsAnalyzing(true);
-    
+
     // Simulate analysis delay for better UX
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
+
     const prediction = analyzeMatch(homeTeam, awayTeam);
-    
+
     // Calculate confidence based on data completeness
     const homeDataCompleteness = Object.values(homeTeam).filter(v => v !== 0 && v !== '').length;
     const awayDataCompleteness = Object.values(awayTeam).filter(v => v !== 0 && v !== '').length;
@@ -84,14 +94,14 @@ const Index = () => {
       confidence: Math.min(confidence, 95) // Cap at 95%
     });
 
-    // Generate low-risk predictions
-    const { analyzeLowRiskPatterns } = await import('@/utils/lowRiskPredictions');
-    const individualPredictions = analyzeLowRiskPatterns(homeTeam, awayTeam, prediction);
-    const combinedPreds = generateCombinedLowRiskPredictions(homeTeam, awayTeam, prediction);
-    
-    setLowRiskPredictions(individualPredictions);
-    setCombinedPredictions(combinedPreds);
-    
+    // ⚡ PARIS PARFAITS : Seulement les meilleurs (85%+) + Double Chance
+    const perfectBetsPredictions = generatePerfectPredictions(homeTeam, awayTeam);
+    setPerfectBets(perfectBetsPredictions);
+
+    // 🎯 OVER/UNDER ULTRA-PRÉCIS : Basé sur les moyennes réelles des équipes
+    const overUnderPreds = generateAllOverUnderPredictions(homeTeam, awayTeam);
+    setOverUnderPredictions(overUnderPreds);
+
     setIsAnalyzing(false);
   };
 
@@ -101,18 +111,31 @@ const Index = () => {
     setAnalysisResult(null);
     setLowRiskPredictions([]);
     setCombinedPredictions([]);
+    setPerfectBets([]);
+    setOverUnderPredictions([]);
   };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <div className="relative bg-gradient-pitch text-primary-foreground overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center opacity-20"
           style={{ backgroundImage: `url(${heroImage})` }}
         />
         <div className="relative container mx-auto px-4 py-16 text-center">
           <div className="animate-fade-in">
+            <div className="flex items-center justify-between mb-6">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/')}
+                className="text-white hover:bg-white/10"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Retour
+              </Button>
+              <div className="flex-1" />
+            </div>
             <div className="flex justify-center mb-6">
               <div className="p-4 bg-white/10 rounded-full backdrop-blur-sm">
                 <Brain className="h-12 w-12" />
@@ -146,6 +169,25 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8 space-y-8">
         {!analysisResult ? (
           <>
+            {/* SofaScore Import Options */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-slide-up">
+              {/* Option 1: Copier-Coller (RECOMMANDÉ) */}
+              <SofaScoreTextInput
+                onDataLoaded={(home, away) => {
+                  setHomeTeam(home);
+                  setAwayTeam(away);
+                }}
+              />
+
+              {/* Option 2: URL (peut ne pas fonctionner) */}
+              <SofaScoreURLInput
+                onDataLoaded={(home, away) => {
+                  setHomeTeam(home);
+                  setAwayTeam(away);
+                }}
+              />
+            </div>
+
             {/* Team Input Forms */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="animate-slide-up">
@@ -207,25 +249,30 @@ const Index = () => {
                 </CardContent>
               </Card>
 
+              {/* 🏆 TOP 10 PRÉDICTIONS - LES PLUS FIABLES (85-88%) */}
+              <Top10PredictionsPanel
+                homeTeam={homeTeam}
+                awayTeam={awayTeam}
+                homeOdds={1.25}  // TODO: Ajouter champs cotes dans le formulaire
+                awayOdds={8.50}
+                bankroll={1000}
+              />
+
+              {/* ⚡ PARIS PARFAITS - SEULEMENT LES MEILLEURS (ÉPURÉ) */}
+              <PerfectBetsDisplay
+                predictions={perfectBets}
+                homeTeam={analysisResult.homeTeam.name}
+                awayTeam={analysisResult.awayTeam.name}
+              />
+
+              {/* 🎯 OVER/UNDER ULTRA-PRÉCIS - Basé sur vraies moyennes */}
+              <EnhancedOverUnderDisplay predictions={overUnderPredictions} />
+
               {/* Data Quality Indicator */}
-              <DataQualityIndicator 
+              <DataQualityIndicator
                 homeQuality={analysisResult.dataQuality?.home || { score: 0, level: 'poor', missingFields: [], recommendations: [] }}
                 awayQuality={analysisResult.dataQuality?.away || { score: 0, level: 'poor', missingFields: [], recommendations: [] }}
                 overallConfidence={analysisResult.dataQuality?.overall || 0}
-              />
-
-              {/* Prediction Safety Guard */}
-              <PredictionSafetyGuard 
-                validationResult={analysisResult.safetyValidation || {
-                  isValid: true,
-                  confidence: analysisResult.confidence,
-                  riskLevel: 'LOW',
-                  warnings: [],
-                  errors: [],
-                  recommendations: ['Prédiction validée'],
-                  safetyScore: 85,
-                  shouldProceed: true
-                }}
               />
 
               <AnalysisResults 
@@ -234,9 +281,10 @@ const Index = () => {
               />
 
               {/* Comprehensive Predictions */}
-              <ComprehensivePredictions 
-                predictions={analysisResult.comprehensive} 
-              />
+              {/* Temporairement désactivé - propriété 'comprehensive' n'existe pas sur AnalysisResult */}
+              {/* <ComprehensivePredictions
+                predictions={analysisResult.comprehensive}
+              /> */}
 
               {/* Data Requirements */}
               <DataRequirements 

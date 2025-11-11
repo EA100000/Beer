@@ -1,0 +1,12 @@
+{
+  "total_matches": 230557,
+  "complete_data_matches": 109835,
+  "over25_probability": 49.13165679190124,
+  "btts_yes_probability": 51.72063811514873,
+  "home_win_probability": 44.61991550786367,
+  "avg_corners_over25": 10.360166932074021,
+  "avg_corners_under25": 10.443249464956926,
+  "elo_diff_home_win": 43.995837375798736,
+  "elo_diff_draw": -9.873679654900192,
+  "elo_diff_away_win": -61.32760824520331
+}

@@ -1,0 +1,74 @@
+{
+  "total_matches": 132411,
+  "patterns_found": 3,
+  "reliable_patterns": [
+    {
+      "pattern": "odds_extreme",
+      "sample_size": 2597,
+      "avg_goals": 3.57,
+      "predictions": [
+        {
+          "type": "Over 2.5",
+          "precision": 69.58
+        },
+        {
+          "type": "Home Win",
+          "precision": 87.99
+        }
+      ],
+      "all_stats": {
+        "over25": 69.58,
+        "under25": 30.42,
+        "btts_yes": 43.63,
+        "btts_no": 56.37,
+        "home_win": 87.99,
+        "away_win": 3.23,
+        "draw": 8.78
+      }
+    },
+    {
+      "pattern": "huge_favorite_home",
+      "sample_size": 2689,
+      "avg_goals": 3.45,
+      "predictions": [
+        {
+          "type": "Over 2.5",
+          "precision": 67.16
+        },
+        {
+          "type": "Home Win",
+          "precision": 85.65
+        }
+      ],
+      "all_stats": {
+        "over25": 67.16,
+        "under25": 32.84,
+        "btts_yes": 43.44,
+        "btts_no": 56.56,
+        "home_win": 85.65,
+        "away_win": 3.76,
+        "draw": 10.6
+      }
+    },
+    {
+      "pattern": "huge_favorite_away",
+      "sample_size": 4892,
+      "avg_goals": 2.96,
+      "predictions": [
+        {
+          "type": "Away Win",
+          "precision": 66.82
+        }
+      ],
+      "all_stats": {
+        "over25": 56.13,
+        "under25": 43.87,
+        "btts_yes": 50.72,
+        "btts_no": 49.28,
+        "home_win": 13.39,
+        "away_win": 66.82,
+        "draw": 19.79
+      }
+    }
+  ]
+}
