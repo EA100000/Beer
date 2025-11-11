@@ -1,6 +1,12 @@
 /**
  * Parser de texte copié-collé depuis SofaScore
  * Permet de coller directement les statistiques sans scraping
+ *
+ * AMÉLIORATIONS SÉCURITÉ:
+ * - Détection échecs de parsing avec logging
+ * - Validation des données parsées
+ * - Flag MISSING (-999) au lieu de 0 silencieux
+ * - Fallback sur moyennes de ligue
  */
 
 import { TeamStats } from '@/types/football';
@@ -10,7 +16,26 @@ export interface ParsedTeamData {
   awayTeam: TeamStats;
   success: boolean;
   error?: string;
+  warnings?: string[];  // Nouveaux warnings
+  missingFields?: string[];  // Champs manquants
 }
+
+// Flag pour champs manquants (au lieu de 0 silencieux)
+const MISSING = -999;
+
+// Moyennes de ligue pour fallback
+const LEAGUE_AVERAGES = {
+  sofascoreRating: 7.0,
+  goalsPerMatch: 1.5,
+  goalsConcededPerMatch: 1.5,
+  possession: 50,
+  shotsOnTargetPerMatch: 4.5,
+  bigChancesPerMatch: 1.5,
+  foulsPerMatch: 12,
+  yellowCardsPerMatch: 2,
+  offsides: 2,
+  duels: 15
+};
 
 /**
  * Parse le texte copié depuis SofaScore avec format séquentiel
@@ -31,8 +56,14 @@ export function parseSofaScoreText(text: string): ParsedTeamData {
       awayTeamName = teamMatch[2].trim();
     }
 
+    // ========================================================================
+    // PARSING AMÉLIORÉ AVEC DÉTECTION D'ÉCHECS
+    // ========================================================================
+    const warnings: string[] = [];
+    const missingFields: string[] = [];
+
     // Fonction pour trouver une ligne et récupérer les 2 valeurs suivantes
-    const findValues = (keyword: string): [number, number] => {
+    const findValues = (keyword: string, fieldName: string): [number, number] => {
       for (let i = 0; i < lines.length; i++) {
         if (lines[i].toLowerCase().includes(keyword.toLowerCase())) {
           // Chercher les 2 prochaines lignes avec des nombres
@@ -44,14 +75,28 @@ export function parseSofaScoreText(text: string): ParsedTeamData {
               if (values.length === 2) break;
             }
           }
-          return values.length === 2 ? [values[0], values[1]] : [0, 0];
+
+          if (values.length === 2) {
+            return [values[0], values[1]];
+          } else {
+            // ÉCHEC: Logger et marquer comme MISSING
+            console.warn(`⚠️ [Parser] Échec extraction "${keyword}" (${fieldName})`);
+            warnings.push(`Échec extraction: ${fieldName}`);
+            missingFields.push(fieldName);
+            return [MISSING, MISSING];
+          }
         }
       }
-      return [0, 0];
+
+      // Keyword non trouvé
+      console.warn(`⚠️ [Parser] Keyword "${keyword}" non trouvé (${fieldName})`);
+      warnings.push(`Keyword non trouvé: ${fieldName}`);
+      missingFields.push(fieldName);
+      return [MISSING, MISSING];
     };
 
     // Fonction pour extraire une valeur avec pourcentage entre parenthèses
-    const findValuesWithPercent = (keyword: string): [number, number, number, number] => {
+    const findValuesWithPercent = (keyword: string, fieldName: string): [number, number, number, number] => {
       for (let i = 0; i < lines.length; i++) {
         if (lines[i].toLowerCase().includes(keyword.toLowerCase())) {
           // Chercher les 2 prochaines lignes avec format "123.4 (56.7%)"
@@ -65,51 +110,61 @@ export function parseSofaScoreText(text: string): ParsedTeamData {
               if (values.length === 4) break;
             }
           }
-          return values.length === 4
-            ? [values[0], values[1], values[2], values[3]]
-            : [0, 0, 0, 0];
+
+          if (values.length === 4) {
+            return [values[0], values[1], values[2], values[3]];
+          } else {
+            console.warn(`⚠️ [Parser] Échec extraction "${keyword}" (${fieldName})`);
+            warnings.push(`Échec extraction: ${fieldName}`);
+            missingFields.push(fieldName);
+            return [MISSING, MISSING, MISSING, MISSING];
+          }
         }
       }
-      return [0, 0, 0, 0];
+
+      console.warn(`⚠️ [Parser] Keyword "${keyword}" non trouvé (${fieldName})`);
+      warnings.push(`Keyword non trouvé: ${fieldName}`);
+      missingFields.push(fieldName);
+      return [MISSING, MISSING, MISSING, MISSING];
     };
 
-    // Extraire toutes les statistiques
-    const [homeRating, awayRating] = findValues('moy. des notes sofascore');
-    const [homeMatches, awayMatches] = findValues('matchs');
-    const [homeGoals, awayGoals] = findValues('buts marqués');
-    const [homeConceded, awayConceded] = findValues('buts encaissés');
-    const [homeAssists, awayAssists] = findValues('passes décisives');
-    const [homeGoalsPerMatch, awayGoalsPerMatch] = findValues('buts par match');
-    const [homeShotsOnTarget, awayShotsOnTarget] = findValues('tirs cadrés par match');
-    const [homeBigChances, awayBigChances] = findValues('grosses occasions par match');
-    const [homeBigChancesMissed, awayBigChancesMissed] = findValues('grosses occasions ratées');
-    const [homePossession, awayPossession] = findValues('possession');
+    // Extraire toutes les statistiques avec fieldName pour logging
+    const [homeRating, awayRating] = findValues('moy. des notes sofascore', 'rating');
+    const [homeMatches, awayMatches] = findValues('matchs', 'matches');
+    const [homeGoals, awayGoals] = findValues('buts marqués', 'goalsScored');
+    const [homeConceded, awayConceded] = findValues('buts encaissés', 'goalsConceded');
+    const [homeAssists, awayAssists] = findValues('passes décisives', 'assists');
+    const [homeGoalsPerMatch, awayGoalsPerMatch] = findValues('buts par match', 'goalsPerMatch');
+    const [homeShotsOnTarget, awayShotsOnTarget] = findValues('tirs cadrés par match', 'shotsOnTarget');
+    const [homeBigChances, awayBigChances] = findValues('grosses occasions par match', 'bigChances');
+    const [homeBigChancesMissed, awayBigChancesMissed] = findValues('grosses occasions ratées', 'bigChancesMissed');
+    const [homePossession, awayPossession] = findValues('possession', 'possession');
 
     // Passes avec pourcentage
     const [homeAccuratePasses, homePassAccuracy, awayAccuratePasses, awayPassAccuracy] =
-      findValuesWithPercent('précision par match');
+      findValuesWithPercent('précision par match', 'passes');
 
     const [homeLongBalls, homeLongBallsAccuracy, awayLongBalls, awayLongBallsAccuracy] =
-      findValuesWithPercent('longues balles');
+      findValuesWithPercent('longues balles', 'longBalls');
 
     // Défense
-    const [homeCleanSheets, awayCleanSheets] = findValues('cage inviolée');
-    const [homeConcededPerMatch, awayConcededPerMatch] = findValues('buts encaissés par match');
-    const [homeInterceptions, awayInterceptions] = findValues('interceptions par match');
-    const [homeTackles, awayTackles] = findValues('tacles par match');
-    const [homeClearances, awayClearances] = findValues('dégagements par match');
-    const [homePenaltyConceded, awayPenaltyConceded] = findValues('buts sur penalty concédés');
+    const [homeCleanSheets, awayCleanSheets] = findValues('cage inviolée', 'cleanSheets');
+    const [homeConcededPerMatch, awayConcededPerMatch] = findValues('buts encaissés par match', 'concededPerMatch');
+    const [homeInterceptions, awayInterceptions] = findValues('interceptions par match', 'interceptions');
+    const [homeTackles, awayTackles] = findValues('tacles par match', 'tackles');
+    const [homeClearances, awayClearances] = findValues('dégagements par match', 'clearances');
+    const [homePenaltyConceded, awayPenaltyConceded] = findValues('buts sur penalty concédés', 'penaltyConceded');
 
     // Autre
     const [homeDuels, homeDuelsPercent, awayDuels, awayDuelsPercent] =
-      findValuesWithPercent('duels remportés');
+      findValuesWithPercent('duels remportés', 'duels');
 
-    const [homeFouls, awayFouls] = findValues('fautes par match');
-    const [homeOffsides, awayOffsides] = findValues('hors-jeux par match');
-    const [homeGoalKicks, awayGoalKicks] = findValues('coup de pied de but par match');
-    const [homeThrowIns, awayThrowIns] = findValues('touches par match');
-    const [homeYellowCards, awayYellowCards] = findValues('cartons jaunes par match');
-    const [homeRedCards, awayRedCards] = findValues('cartons rouges');
+    const [homeFouls, awayFouls] = findValues('fautes par match', 'fouls');
+    const [homeOffsides, awayOffsides] = findValues('hors-jeux par match', 'offsides');
+    const [homeGoalKicks, awayGoalKicks] = findValues('coup de pied de but par match', 'goalKicks');
+    const [homeThrowIns, awayThrowIns] = findValues('touches par match', 'throwIns');
+    const [homeYellowCards, awayYellowCards] = findValues('cartons jaunes par match', 'yellowCards');
+    const [homeRedCards, awayRedCards] = findValues('cartons rouges', 'redCards');
 
     // Construire les objets TeamStats
     const homeTeam: TeamStats = {
@@ -170,18 +225,92 @@ export function parseSofaScoreText(text: string): ParsedTeamData {
       foulsPerMatch: awayFouls
     };
 
+    // ========================================================================
+    // VALIDATION ET FALLBACK SUR MOYENNES DE LIGUE
+    // ========================================================================
+    const applyFallback = (value: number, fallbackValue: number, fieldName: string): number => {
+      if (value === MISSING) {
+        console.warn(`⚠️ [Parser] Utilisation fallback pour ${fieldName}: ${fallbackValue}`);
+        return fallbackValue;
+      }
+      return value;
+    };
+
+    // Appliquer fallbacks sur champs critiques
+    homeTeam.sofascoreRating = applyFallback(homeTeam.sofascoreRating, LEAGUE_AVERAGES.sofascoreRating, 'homeRating');
+    awayTeam.sofascoreRating = applyFallback(awayTeam.sofascoreRating, LEAGUE_AVERAGES.sofascoreRating, 'awayRating');
+
+    homeTeam.goalsPerMatch = applyFallback(homeTeam.goalsPerMatch, LEAGUE_AVERAGES.goalsPerMatch, 'homeGoalsPerMatch');
+    awayTeam.goalsPerMatch = applyFallback(awayTeam.goalsPerMatch, LEAGUE_AVERAGES.goalsPerMatch, 'awayGoalsPerMatch');
+
+    homeTeam.goalsConcededPerMatch = applyFallback(homeTeam.goalsConcededPerMatch, LEAGUE_AVERAGES.goalsConcededPerMatch, 'homeConcededPerMatch');
+    awayTeam.goalsConcededPerMatch = applyFallback(awayTeam.goalsConcededPerMatch, LEAGUE_AVERAGES.goalsConcededPerMatch, 'awayConcededPerMatch');
+
+    homeTeam.possession = applyFallback(homeTeam.possession, LEAGUE_AVERAGES.possession, 'homePossession');
+    awayTeam.possession = applyFallback(awayTeam.possession, LEAGUE_AVERAGES.possession, 'awayPossession');
+
+    homeTeam.shotsOnTargetPerMatch = applyFallback(homeTeam.shotsOnTargetPerMatch, LEAGUE_AVERAGES.shotsOnTargetPerMatch, 'homeShotsOnTarget');
+    awayTeam.shotsOnTargetPerMatch = applyFallback(awayTeam.shotsOnTargetPerMatch, LEAGUE_AVERAGES.shotsOnTargetPerMatch, 'awayShotsOnTarget');
+
+    // ========================================================================
+    // VALIDATION DES DONNÉES PARSÉES
+    // ========================================================================
+    const validateTeamStats = (team: TeamStats, side: string): void => {
+      // Vérifier goalsPerMatch
+      if (team.goalsPerMatch < 0.3 || team.goalsPerMatch > 5.0) {
+        console.error(`❌ [Parser] ${side} goalsPerMatch invalide: ${team.goalsPerMatch} (attendu 0.3-5.0)`);
+        warnings.push(`${side}: goalsPerMatch invalide (${team.goalsPerMatch})`);
+      }
+
+      // Vérifier possession
+      if (team.possession < 20 || team.possession > 80) {
+        console.error(`❌ [Parser] ${side} possession invalide: ${team.possession}% (attendu 20-80%)`);
+        warnings.push(`${side}: possession invalide (${team.possession}%)`);
+      }
+
+      // Vérifier rating
+      if (team.sofascoreRating < 6.0 || team.sofascoreRating > 8.5) {
+        console.error(`❌ [Parser] ${side} rating invalide: ${team.sofascoreRating} (attendu 6.0-8.5)`);
+        warnings.push(`${side}: rating invalide (${team.sofascoreRating})`);
+      }
+    };
+
+    validateTeamStats(homeTeam, 'Domicile');
+    validateTeamStats(awayTeam, 'Extérieur');
+
+    // Vérifier si trop de champs manquants (parser échoué)
+    if (missingFields.length > 10) {
+      console.error(`❌ [Parser] ÉCHEC MAJEUR: ${missingFields.length} champs manquants`);
+      return {
+        homeTeam,
+        awayTeam,
+        success: false,
+        error: `Trop de champs manquants (${missingFields.length}/30)`,
+        warnings,
+        missingFields
+      };
+    }
+
+    // Si quelques warnings, on accepte mais on signale
+    if (warnings.length > 0) {
+      console.warn(`⚠️ [Parser] Parsing réussi avec ${warnings.length} warnings`);
+    }
+
     return {
       homeTeam,
       awayTeam,
-      success: true
+      success: true,
+      warnings: warnings.length > 0 ? warnings : undefined,
+      missingFields: missingFields.length > 0 ? missingFields : undefined
     };
 
   } catch (error) {
+    console.error('❌ [Parser] Exception critique:', error);
     return {
       homeTeam: {} as TeamStats,
       awayTeam: {} as TeamStats,
       success: false,
-      error: error instanceof Error ? error.message : 'Erreur de parsing'
+      error: error instanceof Error ? error.message : 'Erreur de parsing critique'
     };
   }
 }
