@@ -13,6 +13,7 @@ import { boostConfidenceWithML } from '@/utils/advancedConfidenceBooster';
 import { validateLiveData } from '@/utils/liveDataValidator';
 import { sanitizeLiveMatchData, sanitizeTeamStats } from '@/utils/numberSanitizer';
 import { detectAnomalies } from '@/utils/anomalyDetector';
+import { parseFullMatchOverview } from '@/utils/liveStatsParser';
 
 interface LiveMatchData {
   homeScore: number;
@@ -214,176 +215,46 @@ export default function Live() {
     const match = matches.find(m => m.id === matchId);
     if (!match) return;
 
-    // Parser le texte live - extraire les valeurs numériques séquentiellement
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    // ========================================================================
+    // NOUVEAU PARSER INTELLIGENT - Extraction automatique des stats
+    // ========================================================================
+    console.log('🔍 [Parser Intelligent] Analyse du texte collé...');
+
+    const parsedStats = parseFullMatchOverview(text);
+
+    if (!parsedStats.success) {
+      console.error('❌ [Parser] Échec extraction:', parsedStats.warnings);
+      alert(`❌ Échec du parsing!\n\n${parsedStats.warnings.join('\n')}\n\nVérifiez le format du texte collé.`);
+      return;
+    }
 
     // IMPORTANT: Préserver le score et la minute existants
     const liveData: LiveMatchData = {
-      ...match.liveData  // Garder les données existantes (score, minute)
+      ...match.liveData,  // Garder score et minute
+      homePossession: parsedStats.possession.home,
+      awayPossession: parsedStats.possession.away,
+      homeCorners: parsedStats.corners.home,
+      awayCorners: parsedStats.corners.away,
+      homeFouls: parsedStats.fouls.home,
+      awayFouls: parsedStats.fouls.away,
+      homeYellowCards: parsedStats.yellowCards.home,
+      awayYellowCards: parsedStats.yellowCards.away,
+      homeOffsides: parsedStats.offsides.home,
+      awayOffsides: parsedStats.offsides.away,
+      homeTotalShots: parsedStats.totalShots.home,
+      awayTotalShots: parsedStats.totalShots.away,
+      homeShotsOnTarget: parsedStats.shotsOnTarget.home,
+      awayShotsOnTarget: parsedStats.shotsOnTarget.away
     };
 
-    // Fonction pour extraire 2 nombres après une ligne keyword
-    const extractTwoNumbers = (keyword: string): [number, number] | null => {
-      const idx = lines.findIndex(l => l.toLowerCase().includes(keyword.toLowerCase()));
-      if (idx === -1) return null;
-
-      // Chercher dans la ligne suivante
-      for (let i = idx + 1; i < Math.min(idx + 5, lines.length); i++) {
-        const nums = lines[i].match(/(\d+)/g);
-        if (nums && nums.length >= 2) {
-          return [parseInt(nums[0]), parseInt(nums[1])];
-        }
-      }
-      return null;
-    };
-
-    // Possession (format: ligne "49%" puis ligne "51%")
-    const possIdx = lines.findIndex(l => l.toLowerCase().includes('possession'));
-    if (possIdx !== -1 && lines[possIdx + 1] && lines[possIdx + 2]) {
-      const home = lines[possIdx + 1].match(/(\d+)%/);
-      const away = lines[possIdx + 2].match(/(\d+)%/);
-      if (home && away) {
-        liveData.homePossession = parseInt(home[1]);
-        liveData.awayPossession = parseInt(away[1]);
-      }
-    }
-
-    // Hors-jeu (format: 0Hors-jeu\n2)
-    const offsideIdx = lines.findIndex(l => l.toLowerCase().includes('hors-jeu'));
-    if (offsideIdx !== -1) {
-      const offLine = lines[offsideIdx];
-      const match1 = offLine.match(/^(\d+)/);
-      const nextLine = lines[offsideIdx + 1];
-      if (match1 && nextLine) {
-        const match2 = nextLine.match(/^(\d+)/);
-        if (match2) {
-          liveData.homeOffsides = parseInt(match1[1]);
-          liveData.awayOffsides = parseInt(match2[1]);
-        }
-      }
-    }
-
-    // Corners (format: 6Corners\n3)
-    const cornerIdx = lines.findIndex(l => l.toLowerCase().includes('corners'));
-    if (cornerIdx !== -1) {
-      const cornerLine = lines[cornerIdx];
-      const match1 = cornerLine.match(/^(\d+)/);
-      const nextLine = lines[cornerIdx + 1];
-      if (match1 && nextLine) {
-        const match2 = nextLine.match(/^(\d+)/);
-        if (match2) {
-          liveData.homeCorners = parseInt(match1[1]);
-          liveData.awayCorners = parseInt(match2[1]);
-        }
-      }
-    }
-
-    // Tirs totaux - Plusieurs formats possibles
-    // Format 1: "Nombre total de tirs" avec ligne suivante "9 1"
-    // Format 2: "14 Nombre total de tirs" puis ligne "9"
-    // Format 3: Juste "Tirs" avec format séquentiel
-    let shotsIdx = lines.findIndex(l => l.toLowerCase().includes('nombre total de tirs'));
-    if (shotsIdx !== -1) {
-      // Format séquentiel: ligne actuelle a un chiffre, ligne suivante a l'autre
-      const currentLine = lines[shotsIdx];
-      const match1 = currentLine.match(/^(\d+)/);
-
-      if (match1) {
-        // Format: "14 Nombre total de tirs" puis ligne "9"
-        const nextLine = lines[shotsIdx + 1];
-        if (nextLine) {
-          const match2 = nextLine.match(/^(\d+)/);
-          if (match2) {
-            liveData.homeTotalShots = parseInt(match1[1]);
-            liveData.awayTotalShots = parseInt(match2[1]);
-          }
-        }
-      } else {
-        // Format: "Nombre total de tirs" puis ligne "9 1"
-        const nextLine = lines[shotsIdx + 1];
-        if (nextLine) {
-          const nums = nextLine.match(/(\d+)/g);
-          if (nums && nums.length >= 2) {
-            liveData.homeTotalShots = parseInt(nums[0]);
-            liveData.awayTotalShots = parseInt(nums[1]);
-          }
-        }
-      }
-    } else {
-      // Essayer avec "Tirs" seul (format court)
-      shotsIdx = lines.findIndex(l => l.toLowerCase() === 'tirs' || (l.toLowerCase().includes('tirs') && !l.toLowerCase().includes('cadré')));
-      if (shotsIdx !== -1) {
-        const shotsLine = lines[shotsIdx];
-        const match1 = shotsLine.match(/^(\d+)/);
-        const nextLine = lines[shotsIdx + 1];
-        if (match1 && nextLine) {
-          const match2 = nextLine.match(/^(\d+)/);
-          if (match2) {
-            liveData.homeTotalShots = parseInt(match1[1]);
-            liveData.awayTotalShots = parseInt(match2[1]);
-          }
-        }
-      }
-    }
-
-    // Tirs cadrés - Plusieurs formats possibles
-    // Format 1: "a puerta" avec "3 1" sur même ligne
-    // Format 2: "Tirs cadrés" format séquentiel
-    // Format 3: "Tirs\na puerta" format séquentiel
-    let onTargetIdx = lines.findIndex(l => l.toLowerCase().includes('a puerta') || l.toLowerCase().includes('cadrés') || l.toLowerCase().includes('cadres'));
-    if (onTargetIdx !== -1) {
-      const onTargetLine = lines[onTargetIdx];
-
-      // D'abord essayer sur la même ligne
-      const nums = onTargetLine.match(/(\d+)/g);
-      if (nums && nums.length >= 2) {
-        liveData.homeShotsOnTarget = parseInt(nums[0]);
-        liveData.awayShotsOnTarget = parseInt(nums[1]);
-      } else if (nums && nums.length === 1) {
-        // Format séquentiel: un chiffre sur cette ligne, un sur la suivante
-        const nextLine = lines[onTargetIdx + 1];
-        if (nextLine) {
-          const match2 = nextLine.match(/^(\d+)/);
-          if (match2) {
-            liveData.homeShotsOnTarget = parseInt(nums[0]);
-            liveData.awayShotsOnTarget = parseInt(match2[1]);
-          }
-        }
-      }
-    }
-
-    // Fautes (format: "9Fautes" puis ligne "10")
-    const foulsIdx = lines.findIndex(l => l.toLowerCase().includes('fautes') && !l.toLowerCase().includes('hors'));
-    if (foulsIdx !== -1) {
-      const foulsLine = lines[foulsIdx];
-      const homeMatch = foulsLine.match(/^(\d+)/);
-      const nextLine = lines[foulsIdx + 1];
-      if (homeMatch && nextLine) {
-        const awayMatch = nextLine.match(/^(\d+)/);
-        if (awayMatch) {
-          liveData.homeFouls = parseInt(homeMatch[1]);
-          liveData.awayFouls = parseInt(awayMatch[1]);
-        }
-      }
-    }
-
-    // Cartons jaunes (format: "0Cartons jaunes" puis ligne "2")
-    const yellowIdx = lines.findIndex(l => l.toLowerCase().includes('cartons jaunes'));
-    if (yellowIdx !== -1) {
-      const yellowLine = lines[yellowIdx];
-      const homeMatch = yellowLine.match(/^(\d+)/);
-      const nextLine = lines[yellowIdx + 1];
-      if (homeMatch && nextLine) {
-        const awayMatch = nextLine.match(/^(\d+)/);
-        if (awayMatch) {
-          liveData.homeYellowCards = parseInt(homeMatch[1]);
-          liveData.awayYellowCards = parseInt(awayMatch[1]);
-        }
-      }
+    // Afficher warnings si présents
+    if (parsedStats.warnings.length > 0) {
+      console.warn('⚠️ [Parser] Warnings:', parsedStats.warnings);
+      // Pas d'alert pour warnings, juste log console
     }
 
     // DEBUG: Afficher les données parsées
-    console.log('📊 Données Live Chargées pour Match', matchId, ':', {
+    console.log('✅ [Parser] Données Live extraites avec succès:', {
       Possession: `${liveData.homePossession}% - ${liveData.awayPossession}%`,
       Corners: `${liveData.homeCorners} - ${liveData.awayCorners}`,
       Fautes: `${liveData.homeFouls} - ${liveData.awayFouls}`,
@@ -1217,20 +1088,46 @@ export default function Live() {
                     )}
 
                     <div className="space-y-2">
-                      <Label className="text-white font-semibold">3. Stats Live (coller)</Label>
+                      <Label className="text-white font-semibold">
+                        3. Stats Live (coller depuis SofaScore)
+                      </Label>
+                      <div className="bg-blue-900/20 border border-blue-700 rounded p-2 mb-2">
+                        <p className="text-blue-300 text-xs font-semibold mb-1">💡 Instructions:</p>
+                        <p className="text-blue-200 text-xs">
+                          1. Ouvrez le match sur SofaScore<br/>
+                          2. Cliquez sur "Aperçu du match"<br/>
+                          3. Sélectionnez TOUT le texte (stats + graphiques)<br/>
+                          4. Copiez (Ctrl+C) et collez ici<br/>
+                          <span className="font-bold text-blue-100">✨ Le parser intelligent extrait automatiquement toutes les stats!</span>
+                        </p>
+                      </div>
                       <Textarea
-                        placeholder="Possession de balle&#10;49%&#10;51%&#10;0Hors-jeu&#10;2&#10;6Corners&#10;3&#10;..."
+                        placeholder="Exemple:&#10;60% Possession 40%&#10;0 Grosses occasions 1&#10;6 Total des tirs 1&#10;4 Corner 0&#10;5 Fautes 8&#10;0 Cartons jaunes 2&#10;3 Tirs cadrés 1&#10;...&#10;&#10;Collez ici toutes les stats du match ⬆️"
                         value={liveText[match.id] || ''}
                         onChange={(e) => setLiveText(prev => ({ ...prev, [match.id]: e.target.value }))}
-                        className="bg-slate-700 text-white border-slate-600 h-32 text-xs"
+                        className="bg-slate-700 text-white border-slate-600 h-40 text-xs font-mono"
                       />
-                      <Button
-                        onClick={() => loadLiveData(match.id)}
-                        className="w-full bg-orange-600 hover:bg-orange-700"
-                        disabled={!liveText[match.id]}
-                      >
-                        Charger Stats Live
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => loadLiveData(match.id)}
+                          className="flex-1 bg-orange-600 hover:bg-orange-700 font-bold"
+                          disabled={!liveText[match.id]}
+                        >
+                          🔍 Analyser Stats Live
+                        </Button>
+                        {liveText[match.id] && (
+                          <Button
+                            onClick={() => setLiveText(prev => ({ ...prev, [match.id]: '' }))}
+                            variant="outline"
+                            className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                          >
+                            🗑️
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        ⚡ <strong>Nouveau:</strong> Parser intelligent qui détecte automatiquement tous les formats de SofaScore
+                      </p>
                     </div>
 
                     {/* Affichage Stats Live - TOUTES LES DONNÉES */}
