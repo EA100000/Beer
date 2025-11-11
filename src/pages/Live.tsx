@@ -1276,56 +1276,172 @@ export default function Live() {
 
                     {/* Prédictions HYBRIDES (Live + Pré-Match) - TOUTES LES DONNÉES UTILISÉES */}
                     {(match.livePredictions.corners.length > 0 || match.livePredictions.fouls.length > 0 || match.livePredictions.yellowCards.length > 0 || match.livePredictions.offsides.length > 0 || match.livePredictions.totalShots.length > 0) && (
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-semibold text-orange-300">⚡ PRÉDICTIONS HYBRIDES (Pré-Match + Live = Précision Maximale)</h4>
+                      <div className="space-y-3">
+                        {/* En-tête avec période du match */}
+                        <div className="bg-gradient-to-r from-orange-900/30 to-red-900/30 border border-orange-700 rounded-lg p-3">
+                          <h4 className="text-base font-bold text-orange-200 flex items-center gap-2">
+                            ⚡ PRÉDICTIONS LIVE - {match.liveData.minute <= 45 ? '1ÈRE MI-TEMPS' : '2ÈME MI-TEMPS'}
+                          </h4>
+                          <p className="text-xs text-orange-300 mt-1">
+                            {match.liveData.minute <= 45
+                              ? '📊 Prédictions pour la mi-temps (45 min)'
+                              : '🔥 Prédictions pour la fin du match (90 min)'}
+                          </p>
+                        </div>
 
-                        {match.livePredictions.corners.slice(0, 2).map((pred, idx) => (
-                          <div key={`c-${idx}`} className="bg-orange-900/20 border border-orange-800 p-2 rounded text-xs">
-                            <div className="flex justify-between text-white">
-                              <span className="font-semibold">Corners {pred.prediction} {pred.threshold} (projeté: {pred.predicted})</span>
-                              <span className="text-orange-400">{pred.confidence}%</span>
-                            </div>
+                        {/* BUTS (GOALS) */}
+                        {match.livePredictions.goals.length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-bold text-yellow-300 flex items-center gap-2">
+                              ⚽ BUTS - {match.livePredictions.goals.length} prédictions
+                            </h5>
+                            {match.livePredictions.goals.map((pred, idx) => (
+                              <div key={`g-${idx}`} className={`p-3 rounded-lg border-2 ${
+                                pred.confidence >= 95 ? 'bg-green-900/30 border-green-600' :
+                                pred.confidence >= 85 ? 'bg-yellow-900/20 border-yellow-600' :
+                                'bg-orange-900/20 border-orange-700'
+                              }`}>
+                                <div className="flex justify-between items-center">
+                                  <span className="font-bold text-white">
+                                    {pred.prediction} {pred.threshold} buts (projeté: {pred.predicted})
+                                  </span>
+                                  <span className={`text-lg font-bold ${
+                                    pred.confidence >= 95 ? 'text-green-300' :
+                                    pred.confidence >= 85 ? 'text-yellow-300' :
+                                    'text-orange-400'
+                                  }`}>
+                                    {pred.confidence}%
+                                  </span>
+                                </div>
+                                <div className="text-xs text-slate-300 mt-1">
+                                  Marge: {pred.safetyMargin.toFixed(1)} buts | Score actuel: {match.liveData.homeScore}-{match.liveData.awayScore}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
 
-                        {match.livePredictions.fouls.slice(0, 2).map((pred, idx) => (
-                          <div key={`f-${idx}`} className="bg-orange-900/20 border border-orange-800 p-2 rounded text-xs">
-                            <div className="flex justify-between text-white">
-                              <span className="font-semibold">Fautes {pred.prediction} {pred.threshold} (projeté: {pred.predicted})</span>
-                              <span className="text-orange-400">{pred.confidence}%</span>
-                            </div>
+                        {/* CORNERS */}
+                        {match.livePredictions.corners.length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-bold text-blue-300 flex items-center gap-2">
+                              🚩 CORNERS - {match.livePredictions.corners.length} prédictions
+                            </h5>
+                            {match.livePredictions.corners.map((pred, idx) => (
+                              <div key={`c-${idx}`} className={`p-3 rounded-lg border ${
+                                pred.confidence >= 90 ? 'bg-blue-900/30 border-blue-600' : 'bg-blue-900/20 border-blue-800'
+                              }`}>
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold text-white">
+                                    {pred.prediction} {pred.threshold} (projeté: {pred.predicted})
+                                  </span>
+                                  <span className="text-blue-300 font-bold">{pred.confidence}%</span>
+                                </div>
+                                <div className="text-xs text-slate-400 mt-1">
+                                  Actuellement: {match.liveData.homeCorners + match.liveData.awayCorners} corners
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
 
-                        {match.livePredictions.yellowCards.slice(0, 2).map((pred, idx) => (
-                          <div key={`y-${idx}`} className="bg-orange-900/20 border border-orange-800 p-2 rounded text-xs">
-                            <div className="flex justify-between text-white">
-                              <span className="font-semibold">Cartons J. {pred.prediction} {pred.threshold} (projeté: {pred.predicted})</span>
-                              <span className="text-orange-400">{pred.confidence}%</span>
-                            </div>
+                        {/* FAUTES */}
+                        {match.livePredictions.fouls.length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-bold text-red-300 flex items-center gap-2">
+                              ⚠️ FAUTES - {match.livePredictions.fouls.length} prédictions
+                            </h5>
+                            {match.livePredictions.fouls.map((pred, idx) => (
+                              <div key={`f-${idx}`} className={`p-3 rounded-lg border ${
+                                pred.confidence >= 90 ? 'bg-red-900/30 border-red-600' : 'bg-red-900/20 border-red-800'
+                              }`}>
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold text-white">
+                                    {pred.prediction} {pred.threshold} (projeté: {pred.predicted})
+                                  </span>
+                                  <span className="text-red-300 font-bold">{pred.confidence}%</span>
+                                </div>
+                                <div className="text-xs text-slate-400 mt-1">
+                                  Actuellement: {match.liveData.homeFouls + match.liveData.awayFouls} fautes
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
 
-                        {match.livePredictions.offsides.slice(0, 2).map((pred, idx) => (
-                          <div key={`o-${idx}`} className="bg-orange-900/20 border border-orange-800 p-2 rounded text-xs">
-                            <div className="flex justify-between text-white">
-                              <span className="font-semibold">Hors-jeux {pred.prediction} {pred.threshold} (projeté: {pred.predicted})</span>
-                              <span className="text-orange-400">{pred.confidence}%</span>
-                            </div>
+                        {/* CARTONS JAUNES */}
+                        {match.livePredictions.yellowCards.length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-bold text-yellow-300 flex items-center gap-2">
+                              🟨 CARTONS JAUNES - {match.livePredictions.yellowCards.length} prédictions
+                            </h5>
+                            {match.livePredictions.yellowCards.map((pred, idx) => (
+                              <div key={`y-${idx}`} className={`p-3 rounded-lg border ${
+                                pred.confidence >= 90 ? 'bg-yellow-900/30 border-yellow-600' : 'bg-yellow-900/20 border-yellow-800'
+                              }`}>
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold text-white">
+                                    {pred.prediction} {pred.threshold} (projeté: {pred.predicted})
+                                  </span>
+                                  <span className="text-yellow-300 font-bold">{pred.confidence}%</span>
+                                </div>
+                                <div className="text-xs text-slate-400 mt-1">
+                                  Actuellement: {match.liveData.homeYellowCards + match.liveData.awayYellowCards} cartons jaunes
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
 
-                        {match.livePredictions.totalShots.slice(0, 2).map((pred, idx) => (
-                          <div key={`s-${idx}`} className="bg-orange-900/20 border border-orange-800 p-2 rounded text-xs">
-                            <div className="flex justify-between text-white">
-                              <span className="font-semibold">Tirs Totaux {pred.prediction} {pred.threshold} (projeté: {pred.predicted})</span>
-                              <span className="text-orange-400">{pred.confidence}%</span>
-                            </div>
-                            <div className="text-slate-400 text-xs mt-1">
-                              Possession: {match.liveData.homePossession}%-{match.liveData.awayPossession}% | Précision: {Math.round((match.liveData.homeShotsOnTarget + match.liveData.awayShotsOnTarget) / Math.max(1, match.liveData.homeTotalShots + match.liveData.awayTotalShots) * 100)}%
-                            </div>
+                        {/* HORS-JEUX */}
+                        {match.livePredictions.offsides.length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-bold text-purple-300 flex items-center gap-2">
+                              🚫 HORS-JEUX - {match.livePredictions.offsides.length} prédictions
+                            </h5>
+                            {match.livePredictions.offsides.map((pred, idx) => (
+                              <div key={`o-${idx}`} className={`p-3 rounded-lg border ${
+                                pred.confidence >= 90 ? 'bg-purple-900/30 border-purple-600' : 'bg-purple-900/20 border-purple-800'
+                              }`}>
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold text-white">
+                                    {pred.prediction} {pred.threshold} (projeté: {pred.predicted})
+                                  </span>
+                                  <span className="text-purple-300 font-bold">{pred.confidence}%</span>
+                                </div>
+                                <div className="text-xs text-slate-400 mt-1">
+                                  Actuellement: {match.liveData.homeOffsides + match.liveData.awayOffsides} hors-jeux
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
+
+                        {/* TIRS TOTAUX */}
+                        {match.livePredictions.totalShots.length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-bold text-cyan-300 flex items-center gap-2">
+                              🎯 TIRS TOTAUX - {match.livePredictions.totalShots.length} prédictions
+                            </h5>
+                            {match.livePredictions.totalShots.map((pred, idx) => (
+                              <div key={`s-${idx}`} className={`p-3 rounded-lg border ${
+                                pred.confidence >= 90 ? 'bg-cyan-900/30 border-cyan-600' : 'bg-cyan-900/20 border-cyan-800'
+                              }`}>
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold text-white">
+                                    {pred.prediction} {pred.threshold} (projeté: {pred.predicted})
+                                  </span>
+                                  <span className="text-cyan-300 font-bold">{pred.confidence}%</span>
+                                </div>
+                                <div className="text-xs text-slate-400 mt-1">
+                                  Actuellement: {match.liveData.homeTotalShots + match.liveData.awayTotalShots} tirs |
+                                  Cadrés: {match.liveData.homeShotsOnTarget + match.liveData.awayShotsOnTarget} |
+                                  Précision: {Math.round((match.liveData.homeShotsOnTarget + match.liveData.awayShotsOnTarget) / Math.max(1, match.liveData.homeTotalShots + match.liveData.awayTotalShots) * 100)}%
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
