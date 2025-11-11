@@ -10,6 +10,9 @@ import { TeamStats } from '@/types/football';
 import { generateAllOverUnderPredictions, OverUnderPrediction } from '@/utils/enhancedOverUnder';
 import { parseSofaScoreText } from '@/utils/sofascoreTextParser';
 import { boostConfidenceWithML } from '@/utils/advancedConfidenceBooster';
+import { validateLiveData } from '@/utils/liveDataValidator';
+import { sanitizeLiveMatchData, sanitizeTeamStats } from '@/utils/numberSanitizer';
+import { detectAnomalies } from '@/utils/anomalyDetector';
 
 interface LiveMatchData {
   homeScore: number;
@@ -553,6 +556,40 @@ export default function Live() {
     if (!match || !match.homeTeam || !match.awayTeam) return;
 
     // ============================================================================
+    // NOUVELLE ÉTAPE 1: VALIDATION DES DONNÉES LIVE
+    // ============================================================================
+    const validation = validateLiveData(match.liveData);
+    if (!validation.valid) {
+      console.error('❌ DONNÉES INVALIDES:', validation.errors);
+      alert(`❌ ERREUR: Données invalides détectées!\n\n${validation.errors.join('\n')}\n\nPrédiction bloquée pour votre sécurité.`);
+      return; // BLOQUER PRÉDICTION
+    }
+
+    if (validation.severity === 'WARNING') {
+      console.warn('⚠️ WARNINGS:', validation.warnings);
+    }
+
+    // ============================================================================
+    // NOUVELLE ÉTAPE 2: SANITIZATION DES DONNÉES
+    // ============================================================================
+    match.liveData = sanitizeLiveMatchData(match.liveData);
+    match.homeTeam = sanitizeTeamStats(match.homeTeam);
+    match.awayTeam = sanitizeTeamStats(match.awayTeam);
+
+    // ============================================================================
+    // NOUVELLE ÉTAPE 3: DÉTECTION D'ANOMALIES
+    // ============================================================================
+    const anomalies = detectAnomalies(match.liveData);
+
+    if (anomalies.overallSeverity === 'CRITICAL') {
+      console.error('🚨 ANOMALIES CRITIQUES:', anomalies.anomalies);
+      const anomalyMessages = anomalies.anomalies.map(a => `- ${a.type}: ${a.description}`).join('\n');
+      alert(`🚨 ATTENTION: Anomalies critiques détectées!\n\n${anomalyMessages}\n\nRecommandation: ${anomalies.recommendedAction}\nAjustement confiance: ${anomalies.confidenceAdjustment}%`);
+    } else if (anomalies.overallSeverity === 'HIGH') {
+      console.warn('⚠️ ANOMALIES HIGH:', anomalies.anomalies);
+    }
+
+    // ============================================================================
     // ANALYSE HYBRIDE: PRÉ-MATCH + LIVE = PRÉCISION MAXIMALE
     // ============================================================================
 
@@ -929,6 +966,36 @@ export default function Live() {
         });
       }
     });
+
+    // ============================================================================
+    // NOUVELLE ÉTAPE 4: APPLIQUER AJUSTEMENT CONFIANCE ANOMALIES
+    // ============================================================================
+    if (anomalies.confidenceAdjustment !== 0) {
+      console.warn(`⚠️ Ajustement confiance anomalies: ${anomalies.confidenceAdjustment}%`);
+
+      // Ajuster BTTS
+      if (bttsPrediction) {
+        const oldConfidence = bttsPrediction.confidence;
+        bttsPrediction.confidence = Math.max(50, Math.min(99, bttsPrediction.confidence + anomalies.confidenceAdjustment));
+        console.log(`  BTTS: ${oldConfidence}% → ${bttsPrediction.confidence}%`);
+      }
+
+      // Ajuster score prediction
+      if (scorePrediction) {
+        const oldConfidence = scorePrediction.confidence;
+        scorePrediction.confidence = Math.max(50, Math.min(99, scorePrediction.confidence + anomalies.confidenceAdjustment));
+        console.log(`  Score: ${oldConfidence}% → ${scorePrediction.confidence}%`);
+      }
+
+      // Ajuster livePredictions (corners, fouls, yellowCards, offsides, totalShots, goals)
+      for (const market in livePredictions) {
+        livePredictions[market as keyof typeof livePredictions].forEach(pred => {
+          const oldConfidence = pred.confidence;
+          pred.confidence = Math.max(50, Math.min(99, pred.confidence + anomalies.confidenceAdjustment));
+          console.log(`  ${market}: ${oldConfidence}% → ${pred.confidence}%`);
+        });
+      }
+    }
 
     // MISE À JOUR: Conserver TOUTES les données existantes (score, minute, etc.)
     setMatches(prev => prev.map(m =>
