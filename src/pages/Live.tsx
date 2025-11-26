@@ -22,8 +22,6 @@ import { validatePrediction } from '@/utils/ultraStrictValidation';
 import { generateComprehensive1xbetMarkets, Comprehensive1xbetMarkets } from '@/utils/comprehensive1xbetMarkets';
 import Comprehensive1xbetDisplay from '@/components/Comprehensive1xbetDisplay';
 import { validateWithHyperReliability, HyperReliablePrediction } from '@/utils/hyperReliabilitySystem';
-import IntelligentLiveForm from '@/components/IntelligentLiveForm';
-import { ParsedMatchData } from '@/utils/intelligentMatchParser';
 
 interface LiveMatchData {
   homeScore: number;
@@ -625,179 +623,6 @@ export default function Live() {
     // Appel différé pour laisser le temps au state de se mettre à jour
     setTimeout(() => {
       console.log('🔄 [Auto-Analyse] Lancement automatique de l\'analyse après ajout snapshot...');
-      analyzeLiveMatch(matchId);
-    }, 100);
-  };
-
-  // ============================================================================
-  // NOUVEAU: Gérer les données du formulaire intelligent (90+ variables)
-  // ============================================================================
-  const handleIntelligentFormData = (matchId: number, data: ParsedMatchData) => {
-    console.log('🤖 [Formulaire Intelligent] Données extraites:', data);
-    console.log(`   Qualité: ${data.dataQuality}%`);
-    console.log(`   Champs manquants: ${data.missingFields.join(', ') || 'Aucun'}`);
-
-    const match = matches.find(m => m.id === matchId);
-    if (!match) return;
-
-    // Mapper les données ParsedMatchData → LiveMatchData (90+ variables)
-    const liveData: LiveMatchData = {
-      ...match.liveData,
-      // Score et temps
-      homeScore: data.homeScore,
-      awayScore: data.awayScore,
-      minute: data.minute,
-      // Possession
-      homePossession: data.homePossession,
-      awayPossession: data.awayPossession,
-      // Corners et fautes
-      homeCorners: data.homeCorners,
-      awayCorners: data.awayCorners,
-      homeFouls: data.homeFouls,
-      awayFouls: data.awayFouls,
-      // Cartons
-      homeYellowCards: data.homeYellowCards || 0,
-      awayYellowCards: data.awayYellowCards || 0,
-      homeRedCards: data.homeRedCards || 0,
-      awayRedCards: data.awayRedCards || 0,
-      // Tirs
-      homeTotalShots: data.homeTotalShots,
-      awayTotalShots: data.awayTotalShots,
-      homeShotsOnTarget: data.homeShotsOnTarget,
-      awayShotsOnTarget: data.awayShotsOnTarget,
-      homeShotsOffTarget: data.homeShotsOffTarget,
-      awayShotsOffTarget: data.awayShotsOffTarget,
-      homeShotsBlocked: data.homeShotsBlocked,
-      awayShotsBlocked: data.awayShotsBlocked,
-      homeShotsInsideBox: data.homeShotsInsideBox,
-      awayShotsInsideBox: data.awayShotsInsideBox,
-      homeShotsOutsideBox: data.homeShotsOutsideBox,
-      awayShotsOutsideBox: data.awayShotsOutsideBox,
-      homeShotsOnPost: data.homeShotsOnPost,
-      awayShotsOnPost: data.awayShotsOnPost,
-      // Gardien
-      homeGoalkeeperSaves: data.homeGoalkeeperSaves,
-      awayGoalkeeperSaves: data.awayGoalkeeperSaves,
-      homeGoalkeeperExits: 0,
-      awayGoalkeeperExits: 0,
-      homeGoalkeeperKicks: data.homeGoalKicks,
-      awayGoalkeeperKicks: data.awayGoalKicks,
-      homeLongKicks: 0,
-      awayLongKicks: 0,
-      homeGoalkeeperThrows: 0,
-      awayGoalkeeperThrows: 0,
-      // Passes
-      homePasses: data.homePasses,
-      awayPasses: data.awayPasses,
-      homeAccuratePasses: data.homeAccuratePasses,
-      awayAccuratePasses: data.awayAccuratePasses,
-      homePassAccuracy: data.homePasses > 0 ? (data.homeAccuratePasses / data.homePasses) * 100 : 0,
-      awayPassAccuracy: data.awayPasses > 0 ? (data.awayAccuratePasses / data.awayPasses) * 100 : 0,
-      homeKeyPasses: 0,
-      awayKeyPasses: 0,
-      homeOwnHalfPasses: 0,
-      awayOwnHalfPasses: 0,
-      homeOpponentHalfPasses: data.homePassesToFinalThird,
-      awayOpponentHalfPasses: data.awayPassesToFinalThird,
-      homeLongBalls: data.homeLongBalls,
-      awayLongBalls: data.awayLongBalls,
-      homeAccurateLongBalls: Math.round(data.homeLongBalls * 0.6), // Estimation 60% précision
-      awayAccurateLongBalls: Math.round(data.awayLongBalls * 0.6),
-      homeLongPassAccuracy: data.homeLongBallsTotal > 0 ? (data.homeLongBalls / data.homeLongBallsTotal) * 100 : 0,
-      awayLongPassAccuracy: data.awayLongBallsTotal > 0 ? (data.awayLongBalls / data.awayLongBallsTotal) * 100 : 0,
-      // Crosses
-      homeCrosses: data.homeCrosses,
-      awayCrosses: data.awayCrosses,
-      homeAccurateCrosses: Math.round(data.homeCrosses * 0.3), // Estimation 30% précision
-      awayAccurateCrosses: Math.round(data.awayCrosses * 0.3),
-      homeCrossAccuracy: data.homeCrossesTotal > 0 ? (data.homeCrosses / data.homeCrossesTotal) * 100 : 0,
-      awayCrossAccuracy: data.awayCrossesTotal > 0 ? (data.awayCrosses / data.awayCrossesTotal) * 100 : 0,
-      // Attaque
-      homeAttacks: 0,
-      awayAttacks: 0,
-      homeDangerousAttacks: data.homeBigChances,
-      awayDangerousAttacks: data.awayBigChances,
-      homeTouches: data.homeTouches,
-      awayTouches: data.awayTouches,
-      homeChancesCreated: data.homeBigChances,
-      awayChancesCreated: data.awayBigChances,
-      // Duels
-      homeTotalDuels: data.homeDuelsTotal,
-      awayTotalDuels: data.awayDuelsTotal,
-      homeDuelsWon: data.homeDuelsWon,
-      awayDuelsWon: data.awayDuelsWon,
-      homeDuelAccuracy: data.homeDuelsTotal > 0 ? (data.homeDuelsWon / data.homeDuelsTotal) * 100 : 0,
-      awayDuelAccuracy: data.awayDuelsTotal > 0 ? (data.awayDuelsWon / data.awayDuelsTotal) * 100 : 0,
-      homeAerialDuels: data.homeAerialDuelsTotal,
-      awayAerialDuels: data.awayAerialDuelsTotal,
-      homeGroundDuels: data.homeGroundDuelsTotal,
-      awayGroundDuels: data.awayGroundDuelsTotal,
-      homeGroundDuelsWon: data.homeGroundDuelsWon,
-      awayGroundDuelsWon: data.awayGroundDuelsWon,
-      homeSuccessfulDribbles: data.homeDribbles,
-      awaySuccessfulDribbles: data.awayDribbles,
-      homeDribblesAttempted: data.homeDribblesTotal,
-      awayDribblesAttempted: data.awayDribblesTotal,
-      homeDefensiveDuels: 0,
-      awayDefensiveDuels: 0,
-      homeDefensiveDuelsWon: 0,
-      awayDefensiveDuelsWon: 0,
-      // Défense
-      homeTackles: data.homeTackles,
-      awayTackles: data.awayTackles,
-      homeInterceptions: data.homeInterceptions,
-      awayInterceptions: data.awayInterceptions,
-      homeClearances: data.homeClearances,
-      awayClearances: data.awayClearances,
-      homeBallsLost: data.homeBallsLost,
-      awayBallsLost: data.awayBallsLost,
-      homeBallsRecovered: data.homeRecoveries,
-      awayBallsRecovered: data.awayRecoveries,
-      homePossessionLost: data.homeBallsLost,
-      awayPossessionLost: data.awayBallsLost,
-      homeShotsRepelled: 0,
-      awayShotsRepelled: 0,
-      // Coups francs & hors-jeux
-      homeFreeKicks: data.homeFreeKicks,
-      awayFreeKicks: data.awayFreeKicks,
-      homeFoulsDrawn: data.awayFouls, // Approximation
-      awayFoulsDrawn: data.homeFouls,
-      homeOffsides: 0,
-      awayOffsides: 0,
-      // xG
-      homeExpectedGoals: data.homeXG,
-      awayExpectedGoals: data.awayXG
-    };
-
-    console.log('✅ [Formulaire Intelligent] Données mappées:', {
-      Possession: `${liveData.homePossession}% - ${liveData.awayPossession}%`,
-      xG: `${liveData.homeExpectedGoals.toFixed(2)} - ${liveData.awayExpectedGoals.toFixed(2)}`,
-      Tirs: `${liveData.homeTotalShots} - ${liveData.awayTotalShots}`,
-      Corners: `${liveData.homeCorners} - ${liveData.awayCorners}`,
-      Fautes: `${liveData.homeFouls} - ${liveData.awayFouls}`,
-    });
-
-    // Créer snapshot
-    const snapshot: LiveDataSnapshot = {
-      minute: liveData.minute,
-      timestamp: Date.now(),
-      data: liveData
-    };
-
-    // Mettre à jour le match
-    setMatches(prev => prev.map(m =>
-      m.id === matchId
-        ? {
-            ...m,
-            liveData,
-            liveDataHistory: [...m.liveDataHistory, snapshot]
-          }
-        : m
-    ));
-
-    // Lancer l'analyse automatiquement
-    setTimeout(() => {
-      console.log('🔄 [Auto-Analyse] Lancement automatique après formulaire intelligent...');
       analyzeLiveMatch(matchId);
     }, 100);
   };
@@ -1835,17 +1660,12 @@ export default function Live() {
                   </div>
                 )}
 
-                {/* ÉTAPE 2: Formulaire Intelligent - 90+ Variables Automatiques */}
+                {/* ÉTAPE 2: Données Live */}
                 {match.preMatchDataEntered && (
                   <>
                     <div className="bg-green-900/20 border border-green-700 rounded p-2">
                       <p className="text-green-400 text-xs">✓ Données pré-match chargées</p>
                     </div>
-
-                    {/* FORMULAIRE INTELLIGENT - 90+ VARIABLES */}
-                    <IntelligentLiveForm
-                      onDataParsed={(data) => handleIntelligentFormData(match.id, data)}
-                    />
 
                     {/* Indicateurs de moments critiques */}
                     {match.liveData.minute > 0 && (
