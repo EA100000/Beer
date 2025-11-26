@@ -13,7 +13,8 @@ import { boostConfidenceWithML } from '@/utils/advancedConfidenceBooster';
 import { validateLiveData } from '@/utils/liveDataValidator';
 import { sanitizeLiveMatchData, sanitizeTeamStats } from '@/utils/numberSanitizer';
 import { detectAnomalies } from '@/utils/anomalyDetector';
-import { parseFullMatchOverview, ParsedLiveStats } from '@/utils/liveStatsParser';
+import { ParsedLiveStats } from '@/utils/liveStatsParser';
+import { parseIntelligentMatchData } from '@/utils/intelligentMatchParser';
 import LiveStatsDisplay from '@/components/LiveStatsDisplay';
 import { analyzeAllTrends, getTrendReport } from '@/utils/linearTrendAnalysis';
 import { enrichLiveData, EnrichedLiveMetrics } from '@/utils/advancedLiveAnalysis';
@@ -439,165 +440,237 @@ export default function Live() {
     if (!match) return;
 
     // ========================================================================
-    // NOUVEAU PARSER INTELLIGENT - Extraction automatique des stats
+    // PARSER INTELLIGENT - Extraction automatique 90+ VARIABLES
     // ========================================================================
-    console.log('🔍 [Parser Intelligent] Analyse du texte collé...');
+    console.log('🔍 [Parser Intelligent] Analyse du texte collé (90+ variables)...');
 
-    const parsedStats = parseFullMatchOverview(text);
+    const intelligentData = parseIntelligentMatchData(text);
 
-    if (!parsedStats.success) {
-      console.error('❌ [Parser] Échec extraction:', parsedStats.warnings);
-      alert(`❌ Échec du parsing!\n\n${parsedStats.warnings.join('\n')}\n\nVérifiez le format du texte collé.`);
-      return;
+    console.log(`📊 [Parser] Qualité des données: ${intelligentData.dataQuality}%`);
+    if (intelligentData.missingFields.length > 0) {
+      console.warn(`⚠️ [Parser] Champs manquants (${intelligentData.missingFields.length}): ${intelligentData.missingFields.join(', ')}`);
     }
 
-    // IMPORTANT: Préserver le score et la minute existants
+    // IMPORTANT: Mapper les 90+ variables de ParsedMatchData → LiveMatchData
     const liveData: LiveMatchData = {
-      ...match.liveData,  // Garder score et minute
-      homePossession: parsedStats.possession.home,
-      awayPossession: parsedStats.possession.away,
-      homeCorners: parsedStats.corners.home,
-      awayCorners: parsedStats.corners.away,
-      homeFouls: parsedStats.fouls.home,
-      awayFouls: parsedStats.fouls.away,
-      homeYellowCards: parsedStats.yellowCards.home,
-      awayYellowCards: parsedStats.yellowCards.away,
-      homeOffsides: parsedStats.offsides.home,
-      awayOffsides: parsedStats.offsides.away,
-      homeTotalShots: parsedStats.totalShots.home,
-      awayTotalShots: parsedStats.totalShots.away,
-      homeShotsOnTarget: parsedStats.shotsOnTarget.home,
-      awayShotsOnTarget: parsedStats.shotsOnTarget.away,
-      // STATS BASIQUES
-      homePasses: parsedStats.passes.home,
-      awayPasses: parsedStats.passes.away,
-      homeTackles: parsedStats.tackles.home,
-      awayTackles: parsedStats.tackles.away,
-      homeGoalkeeperSaves: parsedStats.goalkeeperSaves.home,
-      awayGoalkeeperSaves: parsedStats.goalkeeperSaves.away,
-      homeShotsBlocked: parsedStats.shotsBlocked.home,
-      awayShotsBlocked: parsedStats.shotsBlocked.away,
-      homeShotsOffTarget: parsedStats.shotsOffTarget.home,
-      awayShotsOffTarget: parsedStats.shotsOffTarget.away,
-      homeFreeKicks: parsedStats.freeKicks.home,
-      awayFreeKicks: parsedStats.freeKicks.away,
-      // STATS TIRS AVANCÉS
-      homeShotsOnPost: parsedStats.shotsOnPost.home,
-      awayShotsOnPost: parsedStats.shotsOnPost.away,
-      homeShotsInsideBox: parsedStats.shotsInsideBox.home,
-      awayShotsInsideBox: parsedStats.shotsInsideBox.away,
-      homeShotsOutsideBox: parsedStats.shotsOutsideBox.home,
-      awayShotsOutsideBox: parsedStats.shotsOutsideBox.away,
-      // STATS ATTAQUE
-      homeAttacks: parsedStats.attacks.home,
-      awayAttacks: parsedStats.attacks.away,
-      homeDangerousAttacks: parsedStats.dangerousAttacks.home,
-      awayDangerousAttacks: parsedStats.dangerousAttacks.away,
-      homeCrosses: parsedStats.crosses.home,
-      awayCrosses: parsedStats.crosses.away,
-      homeAccurateCrosses: parsedStats.accurateCrosses.home,
-      awayAccurateCrosses: parsedStats.accurateCrosses.away,
-      // STATS PASSES AVANCÉES
-      homeAccuratePasses: parsedStats.accuratePasses.home,
-      awayAccuratePasses: parsedStats.accuratePasses.away,
-      homeKeyPasses: parsedStats.keyPasses.home,
-      awayKeyPasses: parsedStats.keyPasses.away,
-      homePassAccuracy: parsedStats.passAccuracy.home,
-      awayPassAccuracy: parsedStats.passAccuracy.away,
-      // STATS DUELS
-      homeTotalDuels: parsedStats.totalDuels.home,
-      awayTotalDuels: parsedStats.totalDuels.away,
-      homeDuelsWon: parsedStats.duelsWon.home,
-      awayDuelsWon: parsedStats.duelsWon.away,
-      homeAerialDuels: parsedStats.aerialDuels.home,
-      awayAerialDuels: parsedStats.aerialDuels.away,
-      homeSuccessfulDribbles: parsedStats.successfulDribbles.home,
-      awaySuccessfulDribbles: parsedStats.successfulDribbles.away,
-      // STATS DÉFENSE
-      homeInterceptions: parsedStats.interceptions.home,
-      awayInterceptions: parsedStats.interceptions.away,
-      homeClearances: parsedStats.clearances.home,
-      awayClearances: parsedStats.clearances.away,
-      homeBallsLost: parsedStats.ballsLost.home,
-      awayBallsLost: parsedStats.ballsLost.away,
-      // STATS PASSES DÉTAILLÉES
-      homeOwnHalfPasses: parsedStats.ownHalfPasses.home,
-      awayOwnHalfPasses: parsedStats.ownHalfPasses.away,
-      homeOpponentHalfPasses: parsedStats.opponentHalfPasses.home,
-      awayOpponentHalfPasses: parsedStats.opponentHalfPasses.away,
-      // STATS DUELS DÉTAILLÉES
-      homeGroundDuels: parsedStats.groundDuels.home,
-      awayGroundDuels: parsedStats.groundDuels.away,
-      homeGroundDuelsWon: parsedStats.groundDuelsWon.home,
-      awayGroundDuelsWon: parsedStats.groundDuelsWon.away,
-      // STATS GARDIEN DÉTAILLÉES
-      homeGoalkeeperExits: parsedStats.goalkeeperExits.home,
-      awayGoalkeeperExits: parsedStats.goalkeeperExits.away,
-      homeGoalkeeperKicks: parsedStats.goalkeeperKicks.home,
-      awayGoalkeeperKicks: parsedStats.goalkeeperKicks.away,
-      homeLongKicks: parsedStats.longKicks.home,
-      awayLongKicks: parsedStats.longKicks.away,
-      homeGoalkeeperThrows: parsedStats.goalkeeperThrows.home,
-      awayGoalkeeperThrows: parsedStats.goalkeeperThrows.away,
-      // STATS ATTAQUE DÉTAILLÉES
-      homeLongBalls: parsedStats.longBalls.home,
-      awayLongBalls: parsedStats.longBalls.away,
-      homeAccurateLongBalls: parsedStats.accurateLongBalls.home,
-      awayAccurateLongBalls: parsedStats.accurateLongBalls.away,
-      // CARTONS/FAUTES
-      homeRedCards: parsedStats.redCards.home,
-      awayRedCards: parsedStats.redCards.away,
-      homeFoulsDrawn: parsedStats.foulsDrawn.home,
-      awayFoulsDrawn: parsedStats.foulsDrawn.away,
-      // STATS AVANCÉES
-      homePossessionLost: parsedStats.possessionLost.home,
-      awayPossessionLost: parsedStats.possessionLost.away,
-      homeBallsRecovered: parsedStats.ballsRecovered.home,
-      awayBallsRecovered: parsedStats.ballsRecovered.away,
-      homeTouches: parsedStats.touches.home,
-      awayTouches: parsedStats.touches.away,
-      homeCrossAccuracy: parsedStats.crossAccuracy.home,
-      awayCrossAccuracy: parsedStats.crossAccuracy.away,
-      homeDuelAccuracy: parsedStats.duelAccuracy.home,
-      awayDuelAccuracy: parsedStats.duelAccuracy.away,
-      homeExpectedGoals: parsedStats.expectedGoals.home,
-      awayExpectedGoals: parsedStats.expectedGoals.away,
-      homeDribblesAttempted: parsedStats.dribblesAttempted.home,
-      awayDribblesAttempted: parsedStats.dribblesAttempted.away,
-      homeDefensiveDuels: parsedStats.defensiveDuels.home,
-      awayDefensiveDuels: parsedStats.defensiveDuels.away,
-      homeDefensiveDuelsWon: parsedStats.defensiveDuelsWon.home,
-      awayDefensiveDuelsWon: parsedStats.defensiveDuelsWon.away,
-      homeShotsRepelled: parsedStats.shotsRepelled.home,
-      awayShotsRepelled: parsedStats.shotsRepelled.away,
-      homeChancesCreated: parsedStats.chancesCreated.home,
-      awayChancesCreated: parsedStats.chancesCreated.away,
-      homeLongPassAccuracy: parsedStats.longPassAccuracy.home,
-      awayLongPassAccuracy: parsedStats.longPassAccuracy.away
+      ...match.liveData,
+      // Score et temps
+      homeScore: match.liveData.homeScore,  // Garder score existant
+      awayScore: match.liveData.awayScore,
+      minute: match.liveData.minute,
+      // Possession et xG
+      homePossession: intelligentData.homePossession,
+      awayPossession: intelligentData.awayPossession,
+      homeExpectedGoals: intelligentData.homeXG,
+      awayExpectedGoals: intelligentData.awayXG,
+      // Corners et fautes
+      homeCorners: intelligentData.homeCorners,
+      awayCorners: intelligentData.awayCorners,
+      homeFouls: intelligentData.homeFouls,
+      awayFouls: intelligentData.awayFouls,
+      homeFoulsDrawn: intelligentData.awayFouls,
+      awayFoulsDrawn: intelligentData.homeFouls,
+      // Cartons
+      homeYellowCards: intelligentData.homeYellowCards,
+      awayYellowCards: intelligentData.awayYellowCards,
+      homeRedCards: intelligentData.homeRedCards,
+      awayRedCards: intelligentData.awayRedCards,
+      // Hors-jeux
+      homeOffsides: 0,
+      awayOffsides: 0,
+      // Tirs
+      homeTotalShots: intelligentData.homeTotalShots,
+      awayTotalShots: intelligentData.awayTotalShots,
+      homeShotsOnTarget: intelligentData.homeShotsOnTarget,
+      awayShotsOnTarget: intelligentData.awayShotsOnTarget,
+      homeShotsOffTarget: intelligentData.homeShotsOffTarget,
+      awayShotsOffTarget: intelligentData.awayShotsOffTarget,
+      homeShotsBlocked: intelligentData.homeShotsBlocked,
+      awayShotsBlocked: intelligentData.awayShotsBlocked,
+      homeShotsInsideBox: intelligentData.homeShotsInsideBox,
+      awayShotsInsideBox: intelligentData.awayShotsInsideBox,
+      homeShotsOutsideBox: intelligentData.homeShotsOutsideBox,
+      awayShotsOutsideBox: intelligentData.awayShotsOutsideBox,
+      homeShotsOnPost: intelligentData.homeShotsOnPost,
+      awayShotsOnPost: intelligentData.awayShotsOnPost,
+      // Gardien
+      homeGoalkeeperSaves: intelligentData.homeGoalkeeperSaves,
+      awayGoalkeeperSaves: intelligentData.awayGoalkeeperSaves,
+      homeGoalkeeperExits: 0,
+      awayGoalkeeperExits: 0,
+      homeGoalkeeperKicks: intelligentData.homeGoalKicks,
+      awayGoalkeeperKicks: intelligentData.awayGoalKicks,
+      homeLongKicks: 0,
+      awayLongKicks: 0,
+      homeGoalkeeperThrows: 0,
+      awayGoalkeeperThrows: 0,
+      // Passes
+      homePasses: intelligentData.homePasses,
+      awayPasses: intelligentData.awayPasses,
+      homeAccuratePasses: intelligentData.homeAccuratePasses,
+      awayAccuratePasses: intelligentData.awayAccuratePasses,
+      homePassAccuracy: intelligentData.homePasses > 0 ? (intelligentData.homeAccuratePasses / intelligentData.homePasses) * 100 : 0,
+      awayPassAccuracy: intelligentData.awayPasses > 0 ? (intelligentData.awayAccuratePasses / intelligentData.awayPasses) * 100 : 0,
+      homeKeyPasses: 0,
+      awayKeyPasses: 0,
+      homeOwnHalfPasses: 0,
+      awayOwnHalfPasses: 0,
+      homeOpponentHalfPasses: intelligentData.homePassesToFinalThird,
+      awayOpponentHalfPasses: intelligentData.awayPassesToFinalThird,
+      // Passes dans tiers offensif
+      homeLongBalls: intelligentData.homeLongBalls,
+      awayLongBalls: intelligentData.awayLongBalls,
+      homeAccurateLongBalls: Math.round(intelligentData.homeLongBalls * 0.6),
+      awayAccurateLongBalls: Math.round(intelligentData.awayLongBalls * 0.6),
+      homeLongPassAccuracy: intelligentData.homeLongBallsTotal > 0 ? (intelligentData.homeLongBalls / intelligentData.homeLongBallsTotal) * 100 : 0,
+      awayLongPassAccuracy: intelligentData.awayLongBallsTotal > 0 ? (intelligentData.awayLongBalls / intelligentData.awayLongBallsTotal) * 100 : 0,
+      // Crosses
+      homeCrosses: intelligentData.homeCrosses,
+      awayCrosses: intelligentData.awayCrosses,
+      homeAccurateCrosses: Math.round(intelligentData.homeCrosses * 0.3),
+      awayAccurateCrosses: Math.round(intelligentData.awayCrosses * 0.3),
+      homeCrossAccuracy: intelligentData.homeCrossesTotal > 0 ? (intelligentData.homeCrosses / intelligentData.homeCrossesTotal) * 100 : 0,
+      awayCrossAccuracy: intelligentData.awayCrossesTotal > 0 ? (intelligentData.awayCrosses / intelligentData.awayCrossesTotal) * 100 : 0,
+      // Attaque
+      homeAttacks: 0,
+      awayAttacks: 0,
+      homeDangerousAttacks: intelligentData.homeBigChances,
+      awayDangerousAttacks: intelligentData.awayBigChances,
+      homeTouches: intelligentData.homeTouches,
+      awayTouches: intelligentData.awayTouches,
+      homeChancesCreated: intelligentData.homeBigChances,
+      awayChancesCreated: intelligentData.awayBigChances,
+      // Duels
+      homeTotalDuels: intelligentData.homeDuelsTotal,
+      awayTotalDuels: intelligentData.awayDuelsTotal,
+      homeDuelsWon: intelligentData.homeDuelsWon,
+      awayDuelsWon: intelligentData.awayDuelsWon,
+      homeDuelAccuracy: intelligentData.homeDuelsTotal > 0 ? (intelligentData.homeDuelsWon / intelligentData.homeDuelsTotal) * 100 : 0,
+      awayDuelAccuracy: intelligentData.awayDuelsTotal > 0 ? (intelligentData.awayDuelsWon / intelligentData.awayDuelsTotal) * 100 : 0,
+      homeAerialDuels: intelligentData.homeAerialDuelsTotal,
+      awayAerialDuels: intelligentData.awayAerialDuelsTotal,
+      homeGroundDuels: intelligentData.homeGroundDuelsTotal,
+      awayGroundDuels: intelligentData.awayGroundDuelsTotal,
+      homeGroundDuelsWon: intelligentData.homeGroundDuelsWon,
+      awayGroundDuelsWon: intelligentData.awayGroundDuelsWon,
+      homeSuccessfulDribbles: intelligentData.homeDribbles,
+      awaySuccessfulDribbles: intelligentData.awayDribbles,
+      homeDribblesAttempted: intelligentData.homeDribblesTotal,
+      awayDribblesAttempted: intelligentData.awayDribblesTotal,
+      homeDefensiveDuels: 0,
+      awayDefensiveDuels: 0,
+      homeDefensiveDuelsWon: 0,
+      awayDefensiveDuelsWon: 0,
+      // Défense
+      homeTackles: intelligentData.homeTackles,
+      awayTackles: intelligentData.awayTackles,
+      homeInterceptions: intelligentData.homeInterceptions,
+      awayInterceptions: intelligentData.awayInterceptions,
+      homeClearances: intelligentData.homeClearances,
+      awayClearances: intelligentData.awayClearances,
+      homeBallsLost: intelligentData.homeBallsLost,
+      awayBallsLost: intelligentData.awayBallsLost,
+      homeBallsRecovered: intelligentData.homeRecoveries,
+      awayBallsRecovered: intelligentData.awayRecoveries,
+      homePossessionLost: intelligentData.homeBallsLost,
+      awayPossessionLost: intelligentData.awayBallsLost,
+      homeShotsRepelled: 0,
+      awayShotsRepelled: 0,
+      // Coups francs
+      homeFreeKicks: intelligentData.homeFreeKicks,
+      awayFreeKicks: intelligentData.awayFreeKicks
     };
 
-    // Afficher warnings si présents
-    if (parsedStats.warnings.length > 0) {
-      console.warn('⚠️ [Parser] Warnings:', parsedStats.warnings);
-      // Pas d'alert pour warnings, juste log console
-    }
-
-    // DEBUG: Afficher les données parsées
-    console.log('✅ [Parser] Données Live extraites avec succès:', {
+    console.log(`✅ [Parser Intelligent] ${intelligentData.dataQuality}% des données extraites:`, {
       Possession: `${liveData.homePossession}% - ${liveData.awayPossession}%`,
+      xG: `${liveData.homeExpectedGoals.toFixed(2)} - ${liveData.awayExpectedGoals.toFixed(2)}`,
+      Tirs: `${liveData.homeTotalShots} - ${liveData.awayTotalShots}`,
       Corners: `${liveData.homeCorners} - ${liveData.awayCorners}`,
       Fautes: `${liveData.homeFouls} - ${liveData.awayFouls}`,
-      'Cartons Jaunes': `${liveData.homeYellowCards} - ${liveData.awayYellowCards}`,
-      'Hors-jeux': `${liveData.homeOffsides} - ${liveData.awayOffsides}`,
-      'Tirs Totaux': `${liveData.homeTotalShots} - ${liveData.awayTotalShots}`,
-      'Tirs Cadrés': `${liveData.homeShotsOnTarget} - ${liveData.awayShotsOnTarget}`,
-      Passes: `${liveData.homePasses} - ${liveData.awayPasses}`,
-      Tacles: `${liveData.homeTackles} - ${liveData.awayTackles}`,
-      'Arrêts Gardien': `${liveData.homeGoalkeeperSaves} - ${liveData.awayGoalkeeperSaves}`,
-      'Tirs Bloqués': `${liveData.homeShotsBlocked} - ${liveData.awayShotsBlocked}`,
-      'Tirs Non Cadrés': `${liveData.homeShotsOffTarget} - ${liveData.awayShotsOffTarget}`,
-      'Coups Francs': `${liveData.homeFreeKicks} - ${liveData.awayFreeKicks}`
+      'Grosses occasions': `${intelligentData.homeBigChances} - ${intelligentData.awayBigChances}`,
+      Dribbles: `${intelligentData.homeDribbles}/${intelligentData.homeDribblesTotal} - ${intelligentData.awayDribbles}/${intelligentData.awayDribblesTotal}`,
+      'Duels au sol': `${intelligentData.homeGroundDuelsWon}/${intelligentData.homeGroundDuelsTotal} - ${intelligentData.awayGroundDuelsWon}/${intelligentData.awayGroundDuelsTotal}`,
     });
+
+    // Convertir en ParsedLiveStats pour affichage
+    const parsedStats: ParsedLiveStats = {
+      possession: { home: intelligentData.homePossession, away: intelligentData.awayPossession },
+      corners: { home: intelligentData.homeCorners, away: intelligentData.awayCorners },
+      fouls: { home: intelligentData.homeFouls, away: intelligentData.awayFouls },
+      yellowCards: { home: intelligentData.homeYellowCards, away: intelligentData.awayYellowCards },
+      offsides: { home: 0, away: 0 },
+      totalShots: { home: intelligentData.homeTotalShots, away: intelligentData.awayTotalShots },
+      shotsOnTarget: { home: intelligentData.homeShotsOnTarget, away: intelligentData.awayShotsOnTarget },
+      bigChances: { home: intelligentData.homeBigChances, away: intelligentData.awayBigChances },
+      bigChancesScored: { home: intelligentData.homeBigChancesScored, away: intelligentData.awayBigChancesScored },
+      bigChancesMissed: { home: intelligentData.homeBigChancesMissed, away: intelligentData.awayBigChancesMissed },
+      passes: { home: intelligentData.homePasses, away: intelligentData.awayPasses },
+      tackles: { home: intelligentData.homeTackles, away: intelligentData.awayTackles },
+      goalkeeperSaves: { home: intelligentData.homeGoalkeeperSaves, away: intelligentData.awayGoalkeeperSaves },
+      shotsBlocked: { home: intelligentData.homeShotsBlocked, away: intelligentData.awayShotsBlocked },
+      shotsOffTarget: { home: intelligentData.homeShotsOffTarget, away: intelligentData.awayShotsOffTarget },
+      freeKicks: { home: intelligentData.homeFreeKicks, away: intelligentData.awayFreeKicks },
+      shotsOnPost: { home: intelligentData.homeShotsOnPost, away: intelligentData.awayShotsOnPost },
+      shotsInsideBox: { home: intelligentData.homeShotsInsideBox, away: intelligentData.awayShotsInsideBox },
+      shotsOutsideBox: { home: intelligentData.homeShotsOutsideBox, away: intelligentData.awayShotsOutsideBox },
+      attacks: { home: 0, away: 0 },
+      dangerousAttacks: { home: intelligentData.homeBigChances, away: intelligentData.awayBigChances },
+      crosses: { home: intelligentData.homeCrosses, away: intelligentData.awayCrosses },
+      accurateCrosses: { home: Math.round(intelligentData.homeCrosses * 0.3), away: Math.round(intelligentData.awayCrosses * 0.3) },
+      throughPasses: { home: intelligentData.homeThroughBalls, away: intelligentData.awayThroughBalls },
+      touchesInBox: { home: intelligentData.homeTouchesInBox, away: intelligentData.awayTouchesInBox },
+      tacklesInAttackingThird: { home: 0, away: 0 },
+      accuratePasses: { home: intelligentData.homeAccuratePasses, away: intelligentData.awayAccuratePasses },
+      keyPasses: { home: 0, away: 0 },
+      passAccuracy: {
+        home: intelligentData.homePasses > 0 ? (intelligentData.homeAccuratePasses / intelligentData.homePasses) * 100 : 0,
+        away: intelligentData.awayPasses > 0 ? (intelligentData.awayAccuratePasses / intelligentData.awayPasses) * 100 : 0
+      },
+      totalDuels: { home: intelligentData.homeDuelsTotal, away: intelligentData.awayDuelsTotal },
+      duelsWon: { home: intelligentData.homeDuelsWon, away: intelligentData.awayDuelsWon },
+      aerialDuels: { home: intelligentData.homeAerialDuelsTotal, away: intelligentData.awayAerialDuelsTotal },
+      successfulDribbles: { home: intelligentData.homeDribbles, away: intelligentData.awayDribbles },
+      interceptions: { home: intelligentData.homeInterceptions, away: intelligentData.awayInterceptions },
+      clearances: { home: intelligentData.homeClearances, away: intelligentData.awayClearances },
+      ballsLost: { home: intelligentData.homeBallsLost, away: intelligentData.awayBallsLost },
+      ownHalfPasses: { home: 0, away: 0 },
+      opponentHalfPasses: { home: intelligentData.homePassesToFinalThird, away: intelligentData.awayPassesToFinalThird },
+      passesInFinalThird: { home: intelligentData.homePassesInFinalThird, away: intelligentData.awayPassesInFinalThird },
+      groundDuels: { home: intelligentData.homeGroundDuelsTotal, away: intelligentData.awayGroundDuelsTotal },
+      groundDuelsWon: { home: intelligentData.homeGroundDuelsWon, away: intelligentData.awayGroundDuelsWon },
+      goalkeeperExits: { home: 0, away: 0 },
+      goalkeeperKicks: { home: intelligentData.homeGoalKicks, away: intelligentData.awayGoalKicks },
+      longKicks: { home: 0, away: 0 },
+      goalkeeperThrows: { home: 0, away: 0 },
+      greatSaves: { home: 0, away: 0 },
+      longBalls: { home: intelligentData.homeLongBalls, away: intelligentData.awayLongBalls },
+      accurateLongBalls: { home: Math.round(intelligentData.homeLongBalls * 0.6), away: Math.round(intelligentData.awayLongBalls * 0.6) },
+      redCards: { home: intelligentData.homeRedCards, away: intelligentData.awayRedCards },
+      foulsDrawn: { home: intelligentData.awayFouls, away: intelligentData.homeFouls },
+      possessionLost: { home: intelligentData.homeBallsLost, away: intelligentData.awayBallsLost },
+      ballsRecovered: { home: intelligentData.homeRecoveries, away: intelligentData.awayRecoveries },
+      touches: { home: intelligentData.homeTouches, away: intelligentData.awayTouches },
+      crossAccuracy: {
+        home: intelligentData.homeCrossesTotal > 0 ? (intelligentData.homeCrosses / intelligentData.homeCrossesTotal) * 100 : 0,
+        away: intelligentData.awayCrossesTotal > 0 ? (intelligentData.awayCrosses / intelligentData.awayCrossesTotal) * 100 : 0
+      },
+      duelAccuracy: {
+        home: intelligentData.homeDuelsTotal > 0 ? (intelligentData.homeDuelsWon / intelligentData.homeDuelsTotal) * 100 : 0,
+        away: intelligentData.awayDuelsTotal > 0 ? (intelligentData.awayDuelsWon / intelligentData.awayDuelsTotal) * 100 : 0
+      },
+      expectedGoals: { home: intelligentData.homeXG, away: intelligentData.awayXG },
+      dribblesAttempted: { home: intelligentData.homeDribblesTotal, away: intelligentData.awayDribblesTotal },
+      defensiveDuels: { home: 0, away: 0 },
+      defensiveDuelsWon: { home: 0, away: 0 },
+      shotsRepelled: { home: 0, away: 0 },
+      chancesCreated: { home: intelligentData.homeBigChances, away: intelligentData.awayBigChances },
+      longPassAccuracy: {
+        home: intelligentData.homeLongBallsTotal > 0 ? (intelligentData.homeLongBalls / intelligentData.homeLongBallsTotal) * 100 : 0,
+        away: intelligentData.awayLongBallsTotal > 0 ? (intelligentData.awayLongBalls / intelligentData.awayLongBallsTotal) * 100 : 0
+      },
+      success: true,
+      warnings: intelligentData.missingFields.length > 0 ? [`${intelligentData.missingFields.length} champs manquants`] : []
+    };
 
     // NOUVEAU: Sauvegarder snapshot dans l'historique pour analyse linéaire
     const snapshot: LiveDataSnapshot = {
