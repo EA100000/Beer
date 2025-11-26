@@ -1,0 +1,466 @@
+/**
+ * SYSTÈME COMPLET 1XBET - TOUS LES MARCHÉS
+ *
+ * Prédictions pour:
+ * - Mi-temps (Half-Time)
+ * - Temps réglementaire (Full-Time)
+ * - Tous les Over/Under disponibles sur 1xbet
+ */
+
+import { EnrichedLiveMetrics } from './advancedLiveAnalysis';
+import { DynamicWeights } from './dynamicWeightingSystem';
+import { TrendAnalysis } from './linearTrendAnalysis';
+
+export interface HalfTimeFullTimePrediction {
+  // Score exact mi-temps
+  halfTime: {
+    homeScore: number;
+    awayScore: number;
+    confidence: number;
+    reasoning: string;
+  };
+
+  // Score exact fin de match
+  fullTime: {
+    homeScore: number;
+    awayScore: number;
+    confidence: number;
+    reasoning: string;
+  };
+
+  // Indicateurs
+  isInFirstHalf: boolean;
+  minutesMT: number;
+  minutesRemaining: number;
+}
+
+export interface Comprehensive1xbetMarkets {
+  // BUTS
+  goals: {
+    totalGoals: OverUnderMarket;
+    homeGoals: OverUnderMarket;
+    awayGoals: OverUnderMarket;
+    exactScore: {
+      halfTime: string;  // "1-0"
+      fullTime: string;  // "2-1"
+      confidence: number;
+    };
+  };
+
+  // CORNERS
+  corners: {
+    total: OverUnderMarket;
+    home: OverUnderMarket;
+    away: OverUnderMarket;
+    firstHalf: OverUnderMarket;
+    secondHalf: OverUnderMarket;
+  };
+
+  // CARTONS
+  cards: {
+    yellowTotal: OverUnderMarket;
+    yellowHome: OverUnderMarket;
+    yellowAway: OverUnderMarket;
+    totalCards: OverUnderMarket; // Jaunes + Rouges × 2
+  };
+
+  // FAUTES
+  fouls: {
+    total: OverUnderMarket;
+    home: OverUnderMarket;
+    away: OverUnderMarket;
+  };
+
+  // TIRS
+  shots: {
+    totalShots: OverUnderMarket;
+    shotsOnTarget: OverUnderMarket;
+    shotsOffTarget: OverUnderMarket;
+    homeShots: OverUnderMarket;
+    awayShots: OverUnderMarket;
+  };
+
+  // TOUCHES (THROW-INS)
+  throwIns: {
+    total: OverUnderMarket;
+    home: OverUnderMarket;
+    away: OverUnderMarket;
+  };
+
+  // HORS-JEUX
+  offsides: {
+    total: OverUnderMarket;
+    home: OverUnderMarket;
+    away: OverUnderMarket;
+  };
+
+  // BTTS & CLEAN SHEETS
+  specialMarkets: {
+    btts: YesNoMarket;
+    bttsFirstHalf: YesNoMarket;
+    bttsSecondHalf: YesNoMarket;
+    homeCleanSheet: YesNoMarket;
+    awayCleanSheet: YesNoMarket;
+    bothTeamsScore2Plus: YesNoMarket;
+  };
+
+  // MI-TEMPS / FIN DE MATCH
+  halfTimeFullTime: HalfTimeFullTimePrediction;
+}
+
+export interface OverUnderMarket {
+  predictions: Array<{
+    threshold: number;
+    prediction: 'OVER' | 'UNDER';
+    projected: number;
+    confidence: number;
+    distance: number;
+    reasoning: string;
+  }>;
+  bestPick: {
+    threshold: number;
+    prediction: 'OVER' | 'UNDER';
+    confidence: number;
+  } | null;
+}
+
+export interface YesNoMarket {
+  prediction: 'YES' | 'NO';
+  confidence: number;
+  reasoning: string;
+  probability: number;
+}
+
+/**
+ * Génère TOUTES les prédictions 1xbet
+ */
+export function generateComprehensive1xbetMarkets(
+  enrichedMetrics: EnrichedLiveMetrics,
+  currentScore: { home: number; away: number },
+  minute: number,
+  trends?: any,
+  dynamicWeights?: DynamicWeights
+): Comprehensive1xbetMarkets {
+
+  const minutesRemaining = 90 - minute;
+  const isInFirstHalf = minute <= 45;
+  const minutesMT = isInFirstHalf ? (45 - minute) : 0;
+
+  // ============================================================================
+  // 1. PRÉDICTIONS MI-TEMPS / FIN DE MATCH
+  // ============================================================================
+  const halfTimeFullTime = predictHalfTimeFullTime(
+    enrichedMetrics,
+    currentScore,
+    minute,
+    trends
+  );
+
+  // ============================================================================
+  // 2. BUTS (Goals)
+  // ============================================================================
+  const totalGoalsProjected = halfTimeFullTime.fullTime.homeScore + halfTimeFullTime.fullTime.awayScore;
+
+  const goals = {
+    totalGoals: generateOverUnderPredictions(
+      totalGoalsProjected,
+      [0.5, 1.5, 2.5, 3.5, 4.5, 5.5],
+      'Total Buts',
+      85 + (minute > 60 ? 10 : 0)
+    ),
+    homeGoals: generateOverUnderPredictions(
+      halfTimeFullTime.fullTime.homeScore,
+      [0.5, 1.5, 2.5, 3.5],
+      'Buts Domicile',
+      80 + (minute > 60 ? 10 : 0)
+    ),
+    awayGoals: generateOverUnderPredictions(
+      halfTimeFullTime.fullTime.awayScore,
+      [0.5, 1.5, 2.5, 3.5],
+      'Buts Extérieur',
+      80 + (minute > 60 ? 10 : 0)
+    ),
+    exactScore: {
+      halfTime: `${halfTimeFullTime.halfTime.homeScore}-${halfTimeFullTime.halfTime.awayScore}`,
+      fullTime: `${halfTimeFullTime.fullTime.homeScore}-${halfTimeFullTime.fullTime.awayScore}`,
+      confidence: Math.min(halfTimeFullTime.halfTime.confidence, halfTimeFullTime.fullTime.confidence)
+    }
+  };
+
+  // ============================================================================
+  // 3. CORNERS
+  // ============================================================================
+  const cornersTotal = enrichedMetrics.projections.projectedCorners;
+  const cornersHome = enrichedMetrics.base.homeCorners + (enrichedMetrics.intensity.cornerFrequency.home * minutesRemaining);
+  const cornersAway = enrichedMetrics.base.awayCorners + (enrichedMetrics.intensity.cornerFrequency.away * minutesRemaining);
+
+  // Estimation 1ère/2ème mi-temps (ratio typique 45/55)
+  const cornersFirstHalf = isInFirstHalf
+    ? enrichedMetrics.base.homeCorners + enrichedMetrics.base.awayCorners + ((cornersTotal - (enrichedMetrics.base.homeCorners + enrichedMetrics.base.awayCorners)) * 0.45)
+    : enrichedMetrics.base.homeCorners + enrichedMetrics.base.awayCorners; // Déjà passé
+
+  const cornersSecondHalf = cornersTotal - cornersFirstHalf;
+
+  const corners = {
+    total: generateOverUnderPredictions(cornersTotal, [8.5, 9.5, 10.5, 11.5, 12.5, 13.5], 'Corners Total', 85),
+    home: generateOverUnderPredictions(cornersHome, [3.5, 4.5, 5.5, 6.5], 'Corners Domicile', 80),
+    away: generateOverUnderPredictions(cornersAway, [3.5, 4.5, 5.5, 6.5], 'Corners Extérieur', 80),
+    firstHalf: generateOverUnderPredictions(cornersFirstHalf, [3.5, 4.5, 5.5], 'Corners 1ère MT', isInFirstHalf ? 75 : 95),
+    secondHalf: generateOverUnderPredictions(cornersSecondHalf, [4.5, 5.5, 6.5], 'Corners 2ème MT', isInFirstHalf ? 70 : 85)
+  };
+
+  // ============================================================================
+  // 4. CARTONS
+  // ============================================================================
+  const cardsTotal = enrichedMetrics.projections.projectedCards;
+  const minutesSafe = Math.max(1, minute); // Protection contre division par zéro
+
+  // ⚠️ CORRECTION CRITIQUE: Protection NaN + Validation cardRate
+  const cardRateHome = (enrichedMetrics.intensity.cardRate.home || 0);
+  const cardRateAway = (enrichedMetrics.intensity.cardRate.away || 0);
+  const foulsHomeForCards = enrichedMetrics.base.homeFouls || 0;
+  const foulsAwayForCards = enrichedMetrics.base.awayFouls || 0;
+
+  const cardsHome = enrichedMetrics.base.homeYellowCards +
+    (isFinite(cardRateHome) && isFinite(foulsHomeForCards) ? (cardRateHome / 100 * foulsHomeForCards / minutesSafe * minutesRemaining) : 0);
+  const cardsAway = enrichedMetrics.base.awayYellowCards +
+    (isFinite(cardRateAway) && isFinite(foulsAwayForCards) ? (cardRateAway / 100 * foulsAwayForCards / minutesSafe * minutesRemaining) : 0);
+
+  const cards = {
+    yellowTotal: generateOverUnderPredictions(cardsTotal, [2.5, 3.5, 4.5, 5.5, 6.5], 'Cartons Jaunes Total', 82),
+    yellowHome: generateOverUnderPredictions(cardsHome, [1.5, 2.5, 3.5], 'Cartons Jaunes Domicile', 78),
+    yellowAway: generateOverUnderPredictions(cardsAway, [1.5, 2.5, 3.5], 'Cartons Jaunes Extérieur', 78),
+    totalCards: generateOverUnderPredictions(cardsTotal, [3.5, 4.5, 5.5, 6.5], 'Total Cartons', 80)
+  };
+
+  // ============================================================================
+  // 5. FAUTES
+  // ============================================================================
+  const foulsTotal = enrichedMetrics.projections.projectedFouls;
+  const foulsHome = enrichedMetrics.base.homeFouls + (enrichedMetrics.intensity.foulAggression.home * minutesRemaining);
+  const foulsAway = enrichedMetrics.base.awayFouls + (enrichedMetrics.intensity.foulAggression.away * minutesRemaining);
+
+  const fouls = {
+    total: generateOverUnderPredictions(foulsTotal, [20.5, 22.5, 24.5, 26.5, 28.5, 30.5], 'Fautes Total', 85),
+    home: generateOverUnderPredictions(foulsHome, [10.5, 12.5, 14.5], 'Fautes Domicile', 80),
+    away: generateOverUnderPredictions(foulsAway, [10.5, 12.5, 14.5], 'Fautes Extérieur', 80)
+  };
+
+  // ============================================================================
+  // 6. TIRS
+  // ============================================================================
+  const shotsTotal = enrichedMetrics.projections.projectedShots;
+  const shotsHome = enrichedMetrics.base.homeTotalShots + (enrichedMetrics.intensity.shotFrequency.home * minutesRemaining);
+  const shotsAway = enrichedMetrics.base.awayTotalShots + (enrichedMetrics.intensity.shotFrequency.away * minutesRemaining);
+
+  // Protection contre NaN: Calculer les tirs cadrés avec des valeurs sûres
+  const currentShotsOnTarget = enrichedMetrics.base.homeShotsOnTarget + enrichedMetrics.base.awayShotsOnTarget;
+  const currentShotsTotal = enrichedMetrics.base.homeTotalShots + enrichedMetrics.base.awayTotalShots;
+  const remainingShots = Math.max(0, shotsTotal - currentShotsTotal);
+
+  // Précision moyenne des tirs (% cadrés)
+  // ⚠️ CORRECTION CRITIQUE: Division par 2 pour moyenne, puis /100 pour convertir % en décimal
+  const avgShotAccuracy = currentShotsTotal > 0
+    ? (currentShotsOnTarget / currentShotsTotal)
+    : ((enrichedMetrics.efficiency.shotAccuracy.home + enrichedMetrics.efficiency.shotAccuracy.away) / 2 / 100);
+
+  const shotsOnTargetTotal = currentShotsOnTarget + (remainingShots * avgShotAccuracy);
+  const shotsOffTargetTotal = Math.max(0, shotsTotal - shotsOnTargetTotal);
+
+  const shots = {
+    totalShots: generateOverUnderPredictions(shotsTotal, [15.5, 18.5, 20.5, 22.5, 25.5], 'Tirs Total', 85),
+    shotsOnTarget: generateOverUnderPredictions(shotsOnTargetTotal, [6.5, 8.5, 10.5, 12.5], 'Tirs Cadrés Total', 82),
+    shotsOffTarget: generateOverUnderPredictions(shotsOffTargetTotal, [8.5, 10.5, 12.5], 'Tirs Non Cadrés Total', 80),
+    homeShots: generateOverUnderPredictions(shotsHome, [8.5, 10.5, 12.5], 'Tirs Domicile', 82),
+    awayShots: generateOverUnderPredictions(shotsAway, [6.5, 8.5, 10.5], 'Tirs Extérieur', 82)
+  };
+
+  // ============================================================================
+  // 7. TOUCHES (Estimation basée sur possession et passes)
+  // ============================================================================
+  const throwInsTotal = Math.round(
+    (enrichedMetrics.base.homePasses + enrichedMetrics.base.awayPasses) * 0.08 + // 8% des passes → touches
+    cornersTotal * 1.5 // Corrélation corners-touches
+  );
+  const throwInsHome = Math.round(throwInsTotal * 0.5);
+  const throwInsAway = throwInsTotal - throwInsHome;
+
+  const throwIns = {
+    total: generateOverUnderPredictions(throwInsTotal, [30.5, 35.5, 40.5, 45.5], 'Touches Total', 75),
+    home: generateOverUnderPredictions(throwInsHome, [15.5, 18.5, 21.5], 'Touches Domicile', 72),
+    away: generateOverUnderPredictions(throwInsAway, [15.5, 18.5, 21.5], 'Touches Extérieur', 72)
+  };
+
+  // ============================================================================
+  // 8. HORS-JEUX
+  // ============================================================================
+  const offsidesTotal = enrichedMetrics.base.homeOffsides + enrichedMetrics.base.awayOffsides +
+    (enrichedMetrics.base.homeOffsides + enrichedMetrics.base.awayOffsides) / minutesSafe * minutesRemaining;
+
+  const offsidesHome = enrichedMetrics.base.homeOffsides + enrichedMetrics.base.homeOffsides / minutesSafe * minutesRemaining;
+  const offsidesAway = enrichedMetrics.base.awayOffsides + enrichedMetrics.base.awayOffsides / minutesSafe * minutesRemaining;
+
+  const offsides = {
+    total: generateOverUnderPredictions(offsidesTotal, [3.5, 4.5, 5.5, 6.5], 'Hors-jeux Total', 78),
+    home: generateOverUnderPredictions(offsidesHome, [1.5, 2.5, 3.5], 'Hors-jeux Domicile', 75),
+    away: generateOverUnderPredictions(offsidesAway, [1.5, 2.5, 3.5], 'Hors-jeux Extérieur', 75)
+  };
+
+  // ============================================================================
+  // 9. MARCHÉS SPÉCIAUX
+  // ============================================================================
+  const specialMarkets = {
+    btts: {
+      prediction: (enrichedMetrics.projections.bttsLikelihood > 50 ? 'YES' : 'NO') as 'YES' | 'NO',
+      confidence: Math.abs(enrichedMetrics.projections.bttsLikelihood - 50) + 50,
+      reasoning: `Likelihood: ${enrichedMetrics.projections.bttsLikelihood.toFixed(0)}% | xG: ${enrichedMetrics.offensiveThreat.xGoals.home.toFixed(1)}-${enrichedMetrics.offensiveThreat.xGoals.away.toFixed(1)}`,
+      probability: enrichedMetrics.projections.bttsLikelihood
+    },
+    bttsFirstHalf: {
+      prediction: (currentScore.home > 0 && currentScore.away > 0 && isInFirstHalf ? 'YES' : 'NO') as 'YES' | 'NO',
+      confidence: isInFirstHalf ? 65 : 95,
+      reasoning: isInFirstHalf ? 'En cours' : 'Mi-temps terminée',
+      probability: isInFirstHalf ? 50 : (currentScore.home > 0 && currentScore.away > 0 ? 100 : 0)
+    },
+    bttsSecondHalf: {
+      prediction: 'YES' as 'YES' | 'NO',
+      confidence: 70,
+      reasoning: 'Basé sur intensité 2ème MT',
+      probability: 60
+    },
+    homeCleanSheet: {
+      prediction: (enrichedMetrics.projections.cleanSheetLikelihood.home > 50 ? 'YES' : 'NO') as 'YES' | 'NO',
+      confidence: Math.abs(enrichedMetrics.projections.cleanSheetLikelihood.home - 50) + 50,
+      reasoning: `Défense: ${enrichedMetrics.defensiveStrength.defensiveIndex.home.toFixed(0)} | xG concédé: ${enrichedMetrics.offensiveThreat.xGoals.away.toFixed(1)}`,
+      probability: enrichedMetrics.projections.cleanSheetLikelihood.home
+    },
+    awayCleanSheet: {
+      prediction: (enrichedMetrics.projections.cleanSheetLikelihood.away > 50 ? 'YES' : 'NO') as 'YES' | 'NO',
+      confidence: Math.abs(enrichedMetrics.projections.cleanSheetLikelihood.away - 50) + 50,
+      reasoning: `Défense: ${enrichedMetrics.defensiveStrength.defensiveIndex.away.toFixed(0)} | xG concédé: ${enrichedMetrics.offensiveThreat.xGoals.home.toFixed(1)}`,
+      probability: enrichedMetrics.projections.cleanSheetLikelihood.away
+    },
+    bothTeamsScore2Plus: {
+      prediction: (halfTimeFullTime.fullTime.homeScore >= 2 && halfTimeFullTime.fullTime.awayScore >= 2 ? 'YES' : 'NO') as 'YES' | 'NO',
+      confidence: 75,
+      reasoning: `Projection: ${halfTimeFullTime.fullTime.homeScore}-${halfTimeFullTime.fullTime.awayScore}`,
+      probability: halfTimeFullTime.fullTime.homeScore >= 2 && halfTimeFullTime.fullTime.awayScore >= 2 ? 70 : 30
+    }
+  };
+
+  return {
+    goals,
+    corners,
+    cards,
+    fouls,
+    shots,
+    throwIns,
+    offsides,
+    specialMarkets,
+    halfTimeFullTime
+  };
+}
+
+/**
+ * Prédit les scores mi-temps et fin de match
+ */
+function predictHalfTimeFullTime(
+  enrichedMetrics: EnrichedLiveMetrics,
+  currentScore: { home: number; away: number },
+  minute: number,
+  trends?: any
+): HalfTimeFullTimePrediction {
+  const isInFirstHalf = minute <= 45;
+  const minutesMT = isInFirstHalf ? (45 - minute) : 0;
+  const minutesRemaining = 90 - minute;
+
+  // xGoals rates (par minute)
+  const xGoalsRateHome = enrichedMetrics.intensity.xGoalsRate.home;
+  const xGoalsRateAway = enrichedMetrics.intensity.xGoalsRate.away;
+
+  // PRÉDICTION MI-TEMPS
+  let halfTimeHome: number;
+  let halfTimeAway: number;
+  let halfTimeConfidence: number;
+
+  if (isInFirstHalf) {
+    // En cours de 1ère MT: projeter jusqu'à 45'
+    halfTimeHome = Math.round(currentScore.home + xGoalsRateHome * minutesMT);
+    halfTimeAway = Math.round(currentScore.away + xGoalsRateAway * minutesMT);
+    halfTimeConfidence = 60 + (minute / 45 * 20); // 60-80%
+  } else {
+    // Déjà en 2ème MT: score MT = score actuel si on était à la MT (estimation)
+    // Approximation: soustraire les buts probables de la 2ème MT
+    const goalsSecondHalfHome = Math.round(xGoalsRateHome * (minute - 45));
+    const goalsSecondHalfAway = Math.round(xGoalsRateAway * (minute - 45));
+    halfTimeHome = Math.max(0, currentScore.home - goalsSecondHalfHome);
+    halfTimeAway = Math.max(0, currentScore.away - goalsSecondHalfAway);
+    halfTimeConfidence = 50; // Moins fiable (rétro-estimation)
+  }
+
+  // PRÉDICTION FIN DE MATCH
+  const fullTimeHome = Math.round(currentScore.home + xGoalsRateHome * minutesRemaining);
+  const fullTimeAway = Math.round(currentScore.away + xGoalsRateAway * minutesRemaining);
+  const fullTimeConfidence = 70 + (minute > 60 ? 15 : minute > 30 ? 10 : 0);
+
+  return {
+    halfTime: {
+      homeScore: halfTimeHome,
+      awayScore: halfTimeAway,
+      confidence: halfTimeConfidence,
+      reasoning: isInFirstHalf
+        ? `Projection à la 45' basée sur xG rate (${xGoalsRateHome.toFixed(3)} - ${xGoalsRateAway.toFixed(3)})`
+        : `Estimation rétro (2ème MT en cours)`
+    },
+    fullTime: {
+      homeScore: fullTimeHome,
+      awayScore: fullTimeAway,
+      confidence: fullTimeConfidence,
+      reasoning: `Projection 90' | xG: ${enrichedMetrics.offensiveThreat.xGoals.home.toFixed(1)}-${enrichedMetrics.offensiveThreat.xGoals.away.toFixed(1)} | Momentum: ${enrichedMetrics.context.momentumHome.toFixed(0)}-${enrichedMetrics.context.momentumAway.toFixed(0)}`
+    },
+    isInFirstHalf,
+    minutesMT,
+    minutesRemaining
+  };
+}
+
+/**
+ * Génère prédictions Over/Under pour un marché
+ */
+function generateOverUnderPredictions(
+  projected: number,
+  thresholds: number[],
+  marketName: string,
+  baseConfidence: number
+): OverUnderMarket {
+  const predictions = thresholds
+    .filter(threshold => Math.abs(projected - threshold) >= 0.5) // Filtre marge minimum
+    .map(threshold => {
+      const prediction: 'OVER' | 'UNDER' = projected > threshold ? 'OVER' : 'UNDER';
+      const distance = Math.abs(projected - threshold);
+      const confidence = Math.min(95, baseConfidence + distance * 5);
+
+      return {
+        threshold,
+        prediction,
+        projected: Math.round(projected * 10) / 10,
+        confidence: Math.round(confidence),
+        distance: Math.round(distance * 10) / 10,
+        reasoning: `${marketName}: Projeté ${projected.toFixed(1)} vs Seuil ${threshold}`
+      };
+    });
+
+  // Meilleur pick = plus grande confiance
+  const bestPick = predictions.length > 0
+    ? predictions.reduce((best, curr) => curr.confidence > best.confidence ? curr : best)
+    : null;
+
+  return {
+    predictions,
+    bestPick: bestPick ? {
+      threshold: bestPick.threshold,
+      prediction: bestPick.prediction,
+      confidence: bestPick.confidence
+    } : null
+  };
+}

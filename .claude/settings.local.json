@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir:*)"
+      "Bash(node backtesting.js:*)",
+      "Bash(npm run build:*)",
+      "Bash(node backtesting-v2.js:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

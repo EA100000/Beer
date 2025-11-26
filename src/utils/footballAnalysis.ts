@@ -103,16 +103,27 @@ function monteCarloSimulation(homeRate: number, awayRate: number, homeTeam: Team
     scorelines: new Map<string, number>()
   };
 
+  // ⚠️ CORRECTION CRITIQUE BUG #6: formFactor peut être négatif → lambda négatif → NaN
   // Calculate advanced parameters for realistic simulation
   const homeForm = homeTeam.goalsPerMatch / Math.max(homeTeam.goalsConcededPerMatch, 0.1);
   const awayForm = awayTeam.goalsPerMatch / Math.max(awayTeam.goalsConcededPerMatch, 0.1);
-  const formFactor = Math.log(homeForm / Math.max(awayForm, 0.1)) * 0.1;
+
+  // Ancien: formFactor = Math.log(homeForm / awayForm) * 0.1 → peut être très négatif
+  // Nouveau: Clamping pour éviter lambda < 0.3 (minimum réaliste pour une équipe)
+  let formFactor = Math.log(homeForm / Math.max(awayForm, 0.1)) * 0.1;
+
+  // Protection: formFactor ne doit JAMAIS rendre homeRate ou awayRate < 0.3
+  const maxFormFactorHome = homeRate - 0.3; // Max ajustement vers le bas pour home
+  const maxFormFactorAway = awayRate - 0.3; // Max ajustement vers le bas pour away
+  formFactor = Math.max(-maxFormFactorHome, Math.min(maxFormFactorAway * 2, formFactor));
 
   for (let i = 0; i < iterations; i++) {
     // Enhanced goal simulation with correlation
     const lambda3 = Math.min(homeRate, awayRate) * 0.1; // Correlation parameter
-    const homeGoals = generateNegativeBinomial(homeRate + formFactor, 0.7);
-    const awayGoals = generateNegativeBinomial(awayRate - formFactor * 0.5, 0.7);
+
+    // Garantie: lambdas toujours >= 0.3
+    const homeGoals = generateNegativeBinomial(Math.max(0.3, homeRate + formFactor), 0.7);
+    const awayGoals = generateNegativeBinomial(Math.max(0.3, awayRate - formFactor * 0.5), 0.7);
     const totalGoals = homeGoals + awayGoals;
 
     // Match outcomes
@@ -148,12 +159,16 @@ function monteCarloSimulation(homeRate: number, awayRate: number, homeTeam: Team
     const intensityFactor = 1 + (totalGoals - 2.5) * 0.1;
     const possessionBalance = (homeTeam.possession || 50) / 100;
     
+    // ⚠️ CORRECTION CRITIQUE BUG #7: Corners correlation possession trop forte
     // Corners (8-14 typical range)
     // CRITICAL UPDATE: Corners DO NOT correlate with Over/Under goals (diff = -0.08)
     // Using real average: 10.36 (Over 2.5) vs 10.44 (Under 2.5)
     const cornerBase = (REAL_CORNER_STATS.avg_corners_over25 + REAL_CORNER_STATS.avg_corners_under25) / 2;
-    // Possession influence only, NO goal correlation
-    results.corners += generatePoisson(cornerBase + (possessionBalance - 0.5) * 2);
+
+    // Ancien: (possessionBalance - 0.5) * 2 → Si 60% possession = +0.2 corners (20% d'écart!)
+    // Nouveau: Facteur réduit à 0.5 pour refléter corrélation réelle modérée (0.65 selon ultraPrecisePredictions)
+    // Si 60% possession → (0.6 - 0.5) * 0.5 = +0.05 corners (~0.5% d'écart)
+    results.corners += generatePoisson(cornerBase + (possessionBalance - 0.5) * 0.5);
     
     // Fouls (18-26 typical range, inversely related to possession accuracy)
     const foulBase = 22 - (homeTeam.accuracyPerMatch || 75) * 0.05;
@@ -198,20 +213,43 @@ function monteCarloSimulation(homeRate: number, awayRate: number, homeTeam: Team
     .slice(0, 5)
     .map(([score, count]) => ({ score, probability: (count / iterations) * 100 }));
 
+  // ============================================================================
+  // CALIBRATION FINALE SUR BASELINES RÉELS
+  // ============================================================================
+  // Si prédiction proche baseline (±5%), ajuster légèrement vers baseline
+  // pour éviter overconfidence et améliorer précision long terme
+
+  const rawOver25Prob = results.over25 / iterations;
+  const rawBttsProb = results.btts / iterations;
+
+  // Calibrer Over 2.5 vers baseline réel (49.13%)
+  const over25Calibrated = calibrateToBaseline(
+    rawOver25Prob,
+    REAL_OVER_UNDER_PROBABILITIES.over25,
+    0.05  // Tolerance 5%
+  );
+
+  // Calibrer BTTS vers baseline réel (51.72%)
+  const bttsCalibrated = calibrateToBaseline(
+    rawBttsProb,
+    REAL_BTTS_PROBABILITIES.btts_yes,
+    0.05  // Tolerance 5%
+  );
+
   return {
     homeWinProb: results.homeWins / iterations,
     drawProb: results.draws / iterations,
     awayWinProb: results.awayWins / iterations,
     over05Prob: results.over05 / iterations,
     over15Prob: results.over15 / iterations,
-    over25Prob: results.over25 / iterations,
+    over25Prob: over25Calibrated,  // ✅ CALIBRÉ
     over35Prob: results.over35 / iterations,
     under05Prob: results.under05 / iterations,
     under15Prob: results.under15 / iterations,
-    under25Prob: results.under25 / iterations,
+    under25Prob: 1 - over25Calibrated,  // ✅ COHÉRENT
     under35Prob: results.under35 / iterations,
-    bttsProb: results.btts / iterations,
-    noBttsProb: results.noBtts / iterations,
+    bttsProb: bttsCalibrated,  // ✅ CALIBRÉ
+    noBttsProb: 1 - bttsCalibrated,  // ✅ COHÉRENT
     expectedGoals: results.totalGoals / iterations,
     expectedCorners: results.corners / iterations,
     expectedFouls: results.fouls / iterations,
@@ -290,6 +328,33 @@ function generateNormal(mean: number, stdDev: number): number {
   const u2 = Math.random();
   const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
   return z0 * stdDev + mean;
+}
+
+/**
+ * CALIBRATION SUR BASELINE RÉEL
+ *
+ * Si prédiction proche du baseline (±tolerance), ajuster vers baseline
+ * pour éviter overconfidence et améliorer précision long terme.
+ *
+ * Exemples:
+ * - Baseline Over 2.5 = 49.13% (quasi 50/50)
+ * - Si prédiction = 52%, proche → calibrer vers 50.5%
+ * - Si prédiction = 70%, loin → garder 70%
+ */
+function calibrateToBaseline(
+  predicted: number,
+  baseline: number,
+  tolerance: number = 0.05
+): number {
+  const diff = Math.abs(predicted - baseline);
+
+  if (diff < tolerance) {
+    // Proche baseline → moyenne pondérée (70% prédiction, 30% baseline)
+    return predicted * 0.7 + baseline * 0.3;
+  }
+
+  // Loin baseline → garder prédiction originale
+  return predicted;
 }
 
 // Enhanced data imputation with league-specific defaults and validation

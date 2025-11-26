@@ -22,7 +22,7 @@ import { SofaScoreURLInput } from '@/components/SofaScoreURLInput';
 import { SofaScoreTextInput } from '@/components/SofaScoreTextInput';
 import { EnhancedOverUnderDisplay } from '@/components/EnhancedOverUnderDisplay';
 import { TeamStats, AnalysisResult } from '@/types/football';
-import { analyzeMatch } from '@/utils/footballAnalysis';
+import { analyzeMatchSafe } from '@/utils/analyzeMatchSafe';
 import { generatePerfectPredictions, PerfectPrediction } from '@/utils/perfectPredictions';
 import { generateAllOverUnderPredictions, OverUnderPrediction } from '@/utils/enhancedOverUnder';
 import { Activity, BarChart3, Brain, ArrowLeft } from 'lucide-react';
@@ -79,20 +79,72 @@ const Index = () => {
     // Simulate analysis delay for better UX
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    const prediction = analyzeMatch(homeTeam, awayTeam);
+    try {
+      // 🛡️ MODE ULTRA-CONSERVATEUR ACTIVÉ PAR DÉFAUT
+      // Confiance min: 90%, Safety score min: 90, Aversion pertes × 2.5
+      const result = analyzeMatchSafe(homeTeam, awayTeam, {
+        ultraConservative: true,  // ✅ ACTIVÉ
+        checkLossAversion: true,  // ✅ ACTIVÉ
+        stake: 100  // Mise par défaut pour calcul espérance
+      });
 
-    // Calculate confidence based on data completeness
-    const homeDataCompleteness = Object.values(homeTeam).filter(v => v !== 0 && v !== '').length;
-    const awayDataCompleteness = Object.values(awayTeam).filter(v => v !== 0 && v !== '').length;
-    const maxFields = Object.keys(defaultTeamStats).length;
-    const confidence = Math.round(((homeDataCompleteness + awayDataCompleteness) / (maxFields * 2)) * 100);
+      // Calculate confidence based on data completeness
+      const homeDataCompleteness = Object.values(homeTeam).filter(v => v !== 0 && v !== '').length;
+      const awayDataCompleteness = Object.values(awayTeam).filter(v => v !== 0 && v !== '').length;
+      const maxFields = Object.keys(defaultTeamStats).length;
+      const confidence = Math.round(((homeDataCompleteness + awayDataCompleteness) / (maxFields * 2)) * 100);
 
-    setAnalysisResult({
-      homeTeam,
-      awayTeam,
-      prediction,
-      confidence: Math.min(confidence, 95) // Cap at 95%
-    });
+      // Afficher résultats validation ultra-conservatrice
+      if (result.ultraConservative) {
+        console.log('\n🛡️ ============ VALIDATION ULTRA-CONSERVATRICE ============');
+        console.log('Approuvé:', result.ultraConservative.approved ? '✅ OUI' : '🚫 NON');
+        console.log('Score final:', result.ultraConservative.finalScore + '/100');
+        console.log('Confiance:', result.ultraConservative.confidence + '%');
+        console.log('Recommandation:', result.ultraConservative.recommendation);
+
+        if (result.ultraConservative.riskFactors.length > 0) {
+          console.warn('⚠️ Facteurs de risque:', result.ultraConservative.riskFactors);
+        }
+
+        if (result.ultraConservative.penalties.length > 0) {
+          console.warn('⚠️ Pénalités:', result.ultraConservative.penalties);
+        }
+      }
+
+      // Afficher résultats aversion pertes
+      if (result.lossAversion) {
+        console.log('\n💰 ============ AVERSION AUX PERTES ============');
+        console.log('EV standard:', result.lossAversion.expectedValue.toFixed(2) + '£');
+        console.log('EV ajusté (perte × 2.5):', result.lossAversion.lossAversionAdjusted.toFixed(2) + '£');
+        console.log('Recommandation:', result.lossAversion.recommendation === 'BET' ? '✅ PARIER' : '🚫 NE PAS PARIER');
+        console.log('Message:', result.lossAversion.message);
+      }
+
+      setAnalysisResult({
+        homeTeam,
+        awayTeam,
+        prediction: result.prediction,
+        confidence: Math.min(confidence, 95), // Cap at 95%
+        ultraConservative: result.ultraConservative,
+        lossAversion: result.lossAversion
+      });
+
+    } catch (error: any) {
+      // Prédiction bloquée par validation ultra-conservatrice
+      console.error('🚫 PRÉDICTION BLOQUÉE:', error.message);
+      alert(
+        '🚫 PRÉDICTION REJETÉE (Mode Ultra-Conservateur)\n\n' +
+        error.message + '\n\n' +
+        'Le système a détecté un risque de perte trop élevé.\n' +
+        'Critères ultra-stricts:\n' +
+        '- Confiance minimum: 90%\n' +
+        '- Safety score minimum: 90/100\n' +
+        '- Aversion aux pertes: Perte pèse 2.5× plus lourd\n\n' +
+        'Recommandation: NE PAS PARIER sur ce match.'
+      );
+      setIsAnalyzing(false);
+      return;
+    }
 
     // ⚡ PARIS PARFAITS : Seulement les meilleurs (85%+) + Double Chance
     const perfectBetsPredictions = generatePerfectPredictions(homeTeam, awayTeam);

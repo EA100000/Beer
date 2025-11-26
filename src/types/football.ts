@@ -139,4 +139,19 @@ export interface AnalysisResult {
     away: DataQuality;
     overall: number;
   };
+  ultraConservative?: {
+    approved: boolean;
+    finalScore: number;
+    confidence: number;
+    riskFactors: string[];
+    penalties: { reason: string; points: number }[];
+    recommendation: 'APPROVED' | 'REJECTED' | 'CRITICAL_REJECTION';
+    message: string;
+  };
+  lossAversion?: {
+    expectedValue: number;
+    lossAversionAdjusted: number;
+    recommendation: 'BET' | 'NO_BET';
+    message: string;
+  };
 }

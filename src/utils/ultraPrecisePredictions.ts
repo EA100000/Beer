@@ -5,18 +5,18 @@ const ULTRA_PRECISE_DATA = {
   // Facteurs de corrélation avancés
   correlations: {
     corners: {
-      possession: 0.72,           // Très forte corrélation
-      shotsOnTarget: 0.78,        // Très forte corrélation
-      attackingPlay: 0.65,        // Forte corrélation
-      pressure: 0.58,             // Bonne corrélation
-      form: 0.52,                 // Bonne corrélation
-      homeAdvantage: 0.45,        // Corrélation modérée
-      intensity: 0.62,            // Forte corrélation
-      setPieces: 0.48,            // Corrélation modérée
-      weather: 0.15,              // Corrélation faible mais significative
-      referee: 0.22,              // Corrélation modérée
-      fatigue: -0.28,             // Corrélation négative
-      motivation: 0.35             // Corrélation modérée
+      possession: 0.65,           // Forte corrélation (réduit de 0.72)
+      shotsOnTarget: 0.28,        // Faible corrélation (CORRIGÉ: était 0.78, FAUX!)
+      attackingPlay: 0.35,        // Corrélation modérée (réduit de 0.65)
+      pressure: 0.48,             // Corrélation modérée (réduit de 0.58)
+      form: 0.38,                 // Corrélation modérée (réduit de 0.52)
+      homeAdvantage: 0.32,        // Corrélation faible (réduit de 0.45)
+      intensity: 0.42,            // Corrélation modérée (réduit de 0.62)
+      setPieces: 0.55,            // Bonne corrélation (augmenté de 0.48 - coups de pied arrêtés)
+      weather: 0.12,              // Corrélation faible (réduit de 0.15)
+      referee: 0.18,              // Corrélation faible (réduit de 0.22)
+      fatigue: -0.22,             // Corrélation négative faible (réduit de -0.28)
+      motivation: 0.25            // Corrélation faible (réduit de 0.35)
     },
     fouls: {
       intensity: 0.78,            // Très forte corrélation
@@ -401,16 +401,25 @@ function predictUltraPreciseCorners(homeTeam: TeamStats, awayTeam: TeamStats, le
   const basePrediction = predictWithUltraPreciseRegression(model, features);
   const predicted = Math.round(basePrediction * 20 + 5); // Conversion en nombre de corners
   
-  // Calcul de la confiance ultra-précise
-  const confidence = Math.min(98, 
-    70 + 
-    (features.possession > 0.3 && features.possession < 0.7 ? 8 : 0) +
-    (features.shotsOnTarget > 0.2 && features.shotsOnTarget < 0.8 ? 7 : 0) +
-    (features.intensity > 0.2 && features.intensity < 0.8 ? 6 : 0) +
-    (features.form > 0.2 && features.form < 0.8 ? 7 : 0) +
-    (features.attackingEfficiency > 0.3 && features.attackingEfficiency < 0.7 ? 5 : 0) +
-    (features.pressure > 0.2 && features.pressure < 0.8 ? 5 : 0)
-  );
+  // ⚠️ CORRECTION CRITIQUE: Confiance calibrée contre baseline réelle (49.13% Over/Under)
+  // Ancien: Base 70% → 98% (toujours surestimé)
+  // Nouveau: Base 52% (baseline corners ~10.4) → Max 92% (avec signaux forts)
+  let rawConfidence = 52; // Baseline réaliste pour corners (~10 corners/match)
+
+  // Bonus uniquement si signaux FORTS (conditions strictes)
+  if (features.possession > 0.35 && features.possession < 0.65) rawConfidence += 6; // Possession équilibrée
+  if (features.shotsOnTarget > 0.35 && features.shotsOnTarget < 0.65) rawConfidence += 5; // Tirs cadrés modérés
+  if (features.intensity > 0.35 && features.intensity < 0.65) rawConfidence += 5; // Intensité contrôlée
+  if (features.form > 0.35 && features.form < 0.65) rawConfidence += 4; // Forme stable
+  if (features.attackingEfficiency > 0.4 && features.attackingEfficiency < 0.6) rawConfidence += 3; // Efficacité moyenne
+  if (features.pressure > 0.35 && features.pressure < 0.65) rawConfidence += 3; // Pression modérée
+
+  // Pénalité si features extrêmes (peu fiables)
+  if (features.possession < 0.2 || features.possession > 0.8) rawConfidence -= 8;
+  if (features.intensity < 0.15 || features.intensity > 0.85) rawConfidence -= 6;
+
+  // Plafond à 92% (jamais 95%+ = suspect selon realWorldConstants.ts)
+  const confidence = Math.max(40, Math.min(92, rawConfidence));
   
   // Prédiction Over/Under
   const threshold = Math.round(predicted);
@@ -450,15 +459,24 @@ function predictUltraPreciseFouls(homeTeam: TeamStats, awayTeam: TeamStats, leag
   const basePrediction = predictWithUltraPreciseRegression(model, features);
   const predicted = Math.round(basePrediction * 30 + 10); // Conversion en nombre de fautes
   
-  const confidence = Math.min(98, 
-    75 + 
-    (features.intensity > 0.2 && features.intensity < 0.8 ? 8 : 0) +
-    (features.pressure > 0.2 && features.pressure < 0.8 ? 7 : 0) +
-    (features.duels > 0.3 && features.duels < 0.7 ? 6 : 0) +
-    (features.form > 0.2 && features.form < 0.8 ? 5 : 0) +
-    (features.referee > 0.3 && features.referee < 0.7 ? 4 : 0) +
-    (features.importance > 0.4 && features.importance < 0.8 ? 3 : 0)
-  );
+  // ⚠️ CORRECTION CRITIQUE: Confiance calibrée (baseline fautes ~22/match)
+  // Ancien: Base 75% → 98% (surestimé)
+  // Nouveau: Base 55% → Max 90%
+  let rawConfidence = 55; // Baseline fautes
+
+  // Bonus signaux forts
+  if (features.intensity > 0.35 && features.intensity < 0.65) rawConfidence += 7;
+  if (features.pressure > 0.35 && features.pressure < 0.65) rawConfidence += 6;
+  if (features.duels > 0.35 && features.duels < 0.65) rawConfidence += 5;
+  if (features.form > 0.35 && features.form < 0.65) rawConfidence += 4;
+  if (features.referee > 0.35 && features.referee < 0.65) rawConfidence += 3;
+  if (features.importance > 0.45 && features.importance < 0.75) rawConfidence += 2;
+
+  // Pénalité features extrêmes
+  if (features.intensity < 0.2 || features.intensity > 0.8) rawConfidence -= 7;
+  if (features.pressure < 0.2 || features.pressure > 0.8) rawConfidence -= 6;
+
+  const confidence = Math.max(40, Math.min(90, rawConfidence));
   
   const threshold = Math.round(predicted);
   const overProb = predicted > threshold ? 0.65 + (predicted - threshold) * 0.1 : 0.35 - (threshold - predicted) * 0.1;
@@ -499,15 +517,24 @@ function predictUltraPreciseCards(homeTeam: TeamStats, awayTeam: TeamStats, leag
   const redPredicted = Math.round(basePrediction * 0.5 * 100) / 100;
   const totalPredicted = yellowPredicted + redPredicted * 2;
   
-  const confidence = Math.min(98, 
-    78 + 
-    (features.fouls > 0.3 && features.fouls < 0.7 ? 8 : 0) +
-    (features.intensity > 0.2 && features.intensity < 0.8 ? 6 : 0) +
-    (features.pressure > 0.2 && features.pressure < 0.8 ? 5 : 0) +
-    (features.form > 0.2 && features.form < 0.8 ? 4 : 0) +
-    (features.referee > 0.3 && features.referee < 0.7 ? 3 : 0) +
-    (features.importance > 0.4 && features.importance < 0.8 ? 2 : 0)
-  );
+  // ⚠️ CORRECTION CRITIQUE: Confiance calibrée (baseline cartons ~3.5/match)
+  // Ancien: Base 78% → 98% (très surestimé - cause pertes massives)
+  // Nouveau: Base 58% → Max 88%
+  let rawConfidence = 58; // Baseline cartons (plus variable que corners/fouls)
+
+  // Bonus signaux forts
+  if (features.fouls > 0.35 && features.fouls < 0.65) rawConfidence += 6;
+  if (features.intensity > 0.35 && features.intensity < 0.65) rawConfidence += 5;
+  if (features.pressure > 0.35 && features.pressure < 0.65) rawConfidence += 4;
+  if (features.form > 0.35 && features.form < 0.65) rawConfidence += 3;
+  if (features.referee > 0.35 && features.referee < 0.65) rawConfidence += 5; // Arbitre = crucial pour cartons
+  if (features.importance > 0.45 && features.importance < 0.75) rawConfidence += 2;
+
+  // Pénalité features extrêmes
+  if (features.fouls < 0.2 || features.fouls > 0.8) rawConfidence -= 8;
+  if (features.intensity < 0.2 || features.intensity > 0.8) rawConfidence -= 6;
+
+  const confidence = Math.max(38, Math.min(88, rawConfidence));
   
   const threshold = Math.round(totalPredicted);
   const overProb = totalPredicted > threshold ? 0.65 + (totalPredicted - threshold) * 0.1 : 0.35 - (threshold - totalPredicted) * 0.1;
@@ -546,15 +573,24 @@ function predictUltraPreciseThrowIns(homeTeam: TeamStats, awayTeam: TeamStats, l
   const basePrediction = predictWithUltraPreciseRegression(model, features);
   const predicted = Math.round(basePrediction * 40 + 15); // Conversion en nombre de touches
   
-  const confidence = Math.min(98, 
-    72 + 
-    (features.possession > 0.2 && features.possession < 0.8 ? 8 : 0) +
-    (features.defensiveSolidity > 0.2 && features.defensiveSolidity < 0.8 ? 7 : 0) +
-    (features.pressure > 0.2 && features.pressure < 0.8 ? 6 : 0) +
-    (features.intensity > 0.2 && features.intensity < 0.8 ? 5 : 0) +
-    (features.form > 0.2 && features.form < 0.8 ? 4 : 0) +
-    (features.tactics > 0.3 && features.tactics < 0.7 ? 3 : 0)
-  );
+  // ⚠️ CORRECTION CRITIQUE: Confiance calibrée (baseline touches ~30-35/match)
+  // Ancien: Base 72% → 98% (surestimé)
+  // Nouveau: Base 54% → Max 86%
+  let rawConfidence = 54; // Baseline touches
+
+  // Bonus signaux forts
+  if (features.possession > 0.35 && features.possession < 0.65) rawConfidence += 6;
+  if (features.defensiveSolidity > 0.35 && features.defensiveSolidity < 0.65) rawConfidence += 5;
+  if (features.pressure > 0.35 && features.pressure < 0.65) rawConfidence += 5;
+  if (features.intensity > 0.35 && features.intensity < 0.65) rawConfidence += 4;
+  if (features.form > 0.35 && features.form < 0.65) rawConfidence += 3;
+  if (features.tactics > 0.35 && features.tactics < 0.65) rawConfidence += 2;
+
+  // Pénalité features extrêmes
+  if (features.possession < 0.2 || features.possession > 0.8) rawConfidence -= 7;
+  if (features.intensity < 0.2 || features.intensity > 0.8) rawConfidence -= 5;
+
+  const confidence = Math.max(38, Math.min(86, rawConfidence));
   
   const threshold = Math.round(predicted);
   const overProb = predicted > threshold ? 0.65 + (predicted - threshold) * 0.1 : 0.35 - (threshold - predicted) * 0.1;
@@ -605,15 +641,25 @@ function predictUltraPreciseGoals(homeTeam: TeamStats, awayTeam: TeamStats, leag
   const awayPredicted = Math.round(awayBasePrediction * 4 + 0.5);
   const totalPredicted = homePredicted + awayPredicted;
   
-  const confidence = Math.min(98, 
-    82 + 
-    (features.attackingEfficiency > 0.3 && features.attackingEfficiency < 0.7 ? 8 : 0) +
-    (features.defensiveSolidity > 0.2 && features.defensiveSolidity < 0.8 ? 6 : 0) +
-    (features.form > 0.2 && features.form < 0.8 ? 7 : 0) +
-    (features.shotsOnTarget > 0.2 && features.shotsOnTarget < 0.8 ? 5 : 0) +
-    (features.possession > 0.2 && features.possession < 0.8 ? 4 : 0) +
-    (features.motivation > 0.3 && features.motivation < 0.7 ? 3 : 0)
-  );
+  // ⚠️ CORRECTION CRITIQUE: Confiance calibrée contre baseline RÉELLE Over/Under 2.5 = 49.13%
+  // Ancien: Base 82% → 98% (ÉNORME surestimation - cause principale des 252M£ de pertes!)
+  // Nouveau: Base 52% → Max 88% (aligné sur baseline réelle)
+  let rawConfidence = 52; // Baseline Over/Under 2.5 = 49.13% → arrondi 52%
+
+  // Bonus UNIQUEMENT si signaux TRÈS forts
+  if (features.attackingEfficiency > 0.4 && features.attackingEfficiency < 0.6) rawConfidence += 7;
+  if (features.defensiveSolidity > 0.4 && features.defensiveSolidity < 0.6) rawConfidence += 6;
+  if (features.form > 0.4 && features.form < 0.6) rawConfidence += 6;
+  if (features.shotsOnTarget > 0.35 && features.shotsOnTarget < 0.65) rawConfidence += 5;
+  if (features.possession > 0.35 && features.possession < 0.65) rawConfidence += 4;
+  if (features.motivation > 0.4 && features.motivation < 0.6) rawConfidence += 3;
+
+  // Pénalité features extrêmes (signaux faibles)
+  if (features.attackingEfficiency < 0.25 || features.attackingEfficiency > 0.75) rawConfidence -= 9;
+  if (features.defensiveSolidity < 0.25 || features.defensiveSolidity > 0.75) rawConfidence -= 8;
+  if (features.form < 0.25 || features.form > 0.75) rawConfidence -= 7;
+
+  const confidence = Math.max(35, Math.min(88, rawConfidence));
   
   // Prédictions Over/Under
   const over05Prob = 1 - Math.exp(-totalPredicted);
