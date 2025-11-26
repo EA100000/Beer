@@ -378,7 +378,8 @@ export function parseIntelligentMatchData(rawText: string): ParsedMatchData {
     data.awayAerialDuelsTotal = parseInt(aerialDuelsMatch[4]);
   }
 
-  const dribblesMatch = text.match(/(\d+)\/(\d+)\s*\d+%\s*Dribbles\s*\d+%\s*(\d+)\/(\d+)/i);
+  // Support 2 formats: "5/10 50% Dribbles 40% 2/5" ET "5/10 Dribbles 2/5"
+  const dribblesMatch = text.match(/(\d+)\/(\d+)(?:\s*\d+%)?\s*Dribbles(?:\s*\d+%)?\s*(\d+)\/(\d+)/i);
   if (dribblesMatch) {
     data.homeDribbles = parseInt(dribblesMatch[1]);
     data.homeDribblesTotal = parseInt(dribblesMatch[2]);
@@ -389,7 +390,8 @@ export function parseIntelligentMatchData(rawText: string): ParsedMatchData {
   // ============================================================================
   // EXTRACTION DÉFENSE
   // ============================================================================
-  const tacklesMatch = text.match(/(\d+)\s*Total de tacles\s*(\d+)/i);
+  // Support 2 formats: "5 Total de tacles 4" ET "5 Tacles 4"
+  const tacklesMatch = text.match(/(\d+)\s*(?:Total de )?[Tt]acles\s*(\d+)/i);
   if (tacklesMatch) {
     data.homeTackles = parseInt(tacklesMatch[1]);
     data.awayTackles = parseInt(tacklesMatch[2]);

@@ -9,7 +9,10 @@
       "Bash(git push:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfix: Ajoute rewrites à vercel.json pour corriger 404 sur routes SPA\n\nCorrection du problème 404 sur Vercel en ajoutant la configuration\nrewrites pour rediriger toutes les routes vers index.html, permettant\nau React Router de gérer le routing côté client.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit -m \"$(cat <<''EOF''\nrefactor: Retour au formulaire Stats Live - Actualisation Continue\n\nSuppression du formulaire intelligent IntelligentLiveForm pour garder\nle système existant \"Stats Live - Actualisation Continue\" qui extrait\net présente déjà toutes les variables nécessaires.\n\nModifications:\n- Retrait IntelligentLiveForm du Live.tsx\n- Retrait imports intelligentMatchParser et ParsedMatchData\n- Suppression fonction handleIntelligentFormData (170 lignes)\n- Conservation du système d''actualisation continue existant\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(node test-extraction.js:*)",
+      "Bash(node test-real-parser.js:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
