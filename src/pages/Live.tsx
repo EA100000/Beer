@@ -322,6 +322,7 @@ export default function Live() {
 
   const [preMatchText, setPreMatchText] = useState<Record<number, string>>({});
   const [liveText, setLiveText] = useState<Record<number, string>>({});
+  const [manualScore, setManualScore] = useState<Record<number, { home: number; away: number; minute: number }>>({});
   const [parsedLiveStats, setParsedLiveStats] = useState<Record<number, ParsedLiveStats | null>>({});
   const [alertsTriggered, setAlertsTriggered] = useState<Record<number, { min35: boolean; min45: boolean; min80: boolean; min90: boolean }>>({});
   const [comprehensive1xbetMarkets, setComprehensive1xbetMarkets] = useState<Record<number, Comprehensive1xbetMarkets | null>>({});
@@ -451,13 +452,21 @@ export default function Live() {
       console.warn(`⚠️ [Parser] Champs manquants (${intelligentData.missingFields.length}): ${intelligentData.missingFields.join(', ')}`);
     }
 
+    // Utiliser les valeurs manuelles si définies, sinon utiliser les valeurs extraites
+    const currentManualScore = manualScore[matchId] || { home: 0, away: 0, minute: 0 };
+    const finalHomeScore = currentManualScore.home || intelligentData.homeScore || 0;
+    const finalAwayScore = currentManualScore.away || intelligentData.awayScore || 0;
+    const finalMinute = currentManualScore.minute || intelligentData.minute || 0;
+
+    console.log(`⚽ [Score/Minute] Manuel: ${currentManualScore.home}-${currentManualScore.away} (${currentManualScore.minute}') | Extrait: ${intelligentData.homeScore}-${intelligentData.awayScore} (${intelligentData.minute}') | Final: ${finalHomeScore}-${finalAwayScore} (${finalMinute}')`);
+
     // IMPORTANT: Mapper les 90+ variables de ParsedMatchData → LiveMatchData
     const liveData: LiveMatchData = {
       ...match.liveData,
-      // Score et temps
-      homeScore: match.liveData.homeScore,  // Garder score existant
-      awayScore: match.liveData.awayScore,
-      minute: match.liveData.minute,
+      // Score et temps (UTILISER LES VALEURS MANUELLES OU EXTRAITES!)
+      homeScore: finalHomeScore,
+      awayScore: finalAwayScore,
+      minute: finalMinute,
       // Possession et xG
       homePossession: intelligentData.homePossession,
       awayPossession: intelligentData.awayPossession,
@@ -1818,6 +1827,59 @@ export default function Live() {
                         )}
                       </div>
 
+                      {/* Inputs manuels Score et Minute */}
+                      <div className="bg-purple-900/20 border border-purple-600 rounded p-3 mb-2">
+                        <p className="text-purple-300 text-xs font-semibold mb-2">📝 Score et Minute Actuels</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <Label htmlFor={`home-score-${match.id}`} className="text-white text-xs">Score Domicile</Label>
+                            <Input
+                              id={`home-score-${match.id}`}
+                              type="number"
+                              min="0"
+                              value={manualScore[match.id]?.home || 0}
+                              onChange={(e) => setManualScore(prev => ({
+                                ...prev,
+                                [match.id]: { ...prev[match.id] || { home: 0, away: 0, minute: 0 }, home: parseInt(e.target.value) || 0 }
+                              }))}
+                              className="bg-slate-700 text-white border-slate-600 h-8"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`away-score-${match.id}`} className="text-white text-xs">Score Extérieur</Label>
+                            <Input
+                              id={`away-score-${match.id}`}
+                              type="number"
+                              min="0"
+                              value={manualScore[match.id]?.away || 0}
+                              onChange={(e) => setManualScore(prev => ({
+                                ...prev,
+                                [match.id]: { ...prev[match.id] || { home: 0, away: 0, minute: 0 }, away: parseInt(e.target.value) || 0 }
+                              }))}
+                              className="bg-slate-700 text-white border-slate-600 h-8"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`minute-${match.id}`} className="text-white text-xs">Minute</Label>
+                            <Input
+                              id={`minute-${match.id}`}
+                              type="number"
+                              min="0"
+                              max="90"
+                              value={manualScore[match.id]?.minute || 0}
+                              onChange={(e) => setManualScore(prev => ({
+                                ...prev,
+                                [match.id]: { ...prev[match.id] || { home: 0, away: 0, minute: 0 }, minute: parseInt(e.target.value) || 0 }
+                              }))}
+                              className="bg-slate-700 text-white border-slate-600 h-8"
+                            />
+                          </div>
+                        </div>
+                        <p className="text-purple-200 text-xs mt-2">
+                          💡 Ces valeurs seront utilisées pour le snapshot. Vous pouvez aussi les laisser vides si elles sont dans le texte collé ci-dessous.
+                        </p>
+                      </div>
+
                       <Textarea
                         placeholder="Exemple:&#10;60% Possession 40%&#10;0 Grosses occasions 1&#10;6 Total des tirs 1&#10;4 Corner 0&#10;5 Fautes 8&#10;0 Cartons jaunes 2&#10;3 Tirs cadrés 1&#10;...&#10;&#10;Collez ici toutes les stats du match ⬆️"
                         value={liveText[match.id] || ''}
@@ -1847,7 +1909,7 @@ export default function Live() {
                       </p>
                     </div>
 
-                    {/* AFFICHAGE COMPLET DES 42 VARIABLES EXTRAITES */}
+                    {/* AFFICHAGE COMPLET DES 90+ VARIABLES EXTRAITES */}
                     {parsedLiveStats[match.id] && match.homeTeam && match.awayTeam && (
                       <LiveStatsDisplay
                         stats={parsedLiveStats[match.id]!}
