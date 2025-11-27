@@ -23,6 +23,7 @@ import { validatePrediction } from '@/utils/ultraStrictValidation';
 import { generateComprehensive1xbetMarkets, Comprehensive1xbetMarkets } from '@/utils/comprehensive1xbetMarkets';
 import Comprehensive1xbetDisplay from '@/components/Comprehensive1xbetDisplay';
 import { validateWithHyperReliability, HyperReliablePrediction } from '@/utils/hyperReliabilitySystem';
+import { calculatePhasedPredictions, AllPhasedPredictions } from '@/utils/phasedPredictions';
 
 interface LiveMatchData {
   homeScore: number;
@@ -188,6 +189,7 @@ interface LiveMatch {
     totalShots: OverUnderPrediction[];
     goals: OverUnderPrediction[];
   };
+  phasedPredictions: AllPhasedPredictions | null; // NOUVEAU: Prédictions 10min/MT/FT
   preMatchDataEntered: boolean;
 }
 
@@ -314,10 +316,10 @@ const defaultLiveData: LiveMatchData = {
 export default function Live() {
   const navigate = useNavigate();
   const [matches, setMatches] = useState<LiveMatch[]>([
-    { id: 1, homeTeam: null, awayTeam: null, liveData: { ...defaultLiveData }, liveDataHistory: [], predictions: [], scorePrediction: null, bttsPrediction: null, livePredictions: { corners: [], fouls: [], yellowCards: [], offsides: [], totalShots: [], goals: [] }, preMatchDataEntered: false },
-    { id: 2, homeTeam: null, awayTeam: null, liveData: { ...defaultLiveData }, liveDataHistory: [], predictions: [], scorePrediction: null, bttsPrediction: null, livePredictions: { corners: [], fouls: [], yellowCards: [], offsides: [], totalShots: [], goals: [] }, preMatchDataEntered: false },
-    { id: 3, homeTeam: null, awayTeam: null, liveData: { ...defaultLiveData }, liveDataHistory: [], predictions: [], scorePrediction: null, bttsPrediction: null, livePredictions: { corners: [], fouls: [], yellowCards: [], offsides: [], totalShots: [], goals: [] }, preMatchDataEntered: false },
-    { id: 4, homeTeam: null, awayTeam: null, liveData: { ...defaultLiveData }, liveDataHistory: [], predictions: [], scorePrediction: null, bttsPrediction: null, livePredictions: { corners: [], fouls: [], yellowCards: [], offsides: [], totalShots: [], goals: [] }, preMatchDataEntered: false }
+    { id: 1, homeTeam: null, awayTeam: null, liveData: { ...defaultLiveData }, liveDataHistory: [], predictions: [], scorePrediction: null, bttsPrediction: null, livePredictions: { corners: [], fouls: [], yellowCards: [], offsides: [], totalShots: [], goals: [] }, phasedPredictions: null, preMatchDataEntered: false },
+    { id: 2, homeTeam: null, awayTeam: null, liveData: { ...defaultLiveData }, liveDataHistory: [], predictions: [], scorePrediction: null, bttsPrediction: null, livePredictions: { corners: [], fouls: [], yellowCards: [], offsides: [], totalShots: [], goals: [] }, phasedPredictions: null, preMatchDataEntered: false },
+    { id: 3, homeTeam: null, awayTeam: null, liveData: { ...defaultLiveData }, liveDataHistory: [], predictions: [], scorePrediction: null, bttsPrediction: null, livePredictions: { corners: [], fouls: [], yellowCards: [], offsides: [], totalShots: [], goals: [] }, phasedPredictions: null, preMatchDataEntered: false },
+    { id: 4, homeTeam: null, awayTeam: null, liveData: { ...defaultLiveData }, liveDataHistory: [], predictions: [], scorePrediction: null, bttsPrediction: null, livePredictions: { corners: [], fouls: [], yellowCards: [], offsides: [], totalShots: [], goals: [] }, phasedPredictions: null, preMatchDataEntered: false }
   ]);
 
   const [preMatchText, setPreMatchText] = useState<Record<number, string>>({});
@@ -984,6 +986,26 @@ export default function Live() {
 
     // Sauvegarder les marchés
     setComprehensive1xbetMarkets(prev => ({ ...prev, [matchId]: allMarkets1xbet }));
+
+    // ============================================================================
+    // 🎯 NOUVEAU: PRÉDICTIONS PAR PHASE (10min / MI-TEMPS / FIN)
+    // ============================================================================
+    console.log('🎯 [Prédictions Par Phase] Calcul 10min / Mi-Temps / Fin...');
+
+    const phasedPreds = calculatePhasedPredictions(
+      enrichedMetrics,
+      { home: match.liveData.homeScore, away: match.liveData.awayScore },
+      match.liveData.minute
+    );
+
+    console.log('✅ [Prédictions Par Phase] Calculées:');
+    if (phasedPreds.next10Minutes) {
+      console.log(`   🔮 10min (${phasedPreds.next10Minutes.timeframe}): ${phasedPreds.next10Minutes.homeScore}-${phasedPreds.next10Minutes.awayScore} (${phasedPreds.next10Minutes.confidence}%)`);
+    }
+    if (phasedPreds.halfTime) {
+      console.log(`   ⚽ Mi-Temps (${phasedPreds.halfTime.timeframe}): ${phasedPreds.halfTime.homeScore}-${phasedPreds.halfTime.awayScore} (${phasedPreds.halfTime.confidence}%)`);
+    }
+    console.log(`   🏁 Fin (${phasedPreds.fullTime.timeframe}): ${phasedPreds.fullTime.homeScore}-${phasedPreds.fullTime.awayScore} (${phasedPreds.fullTime.confidence}%)`);
 
     // ============================================================================
     // 🚀 SYSTÈME HYPER-FIABILITÉ v2.0: Validation Multi-Couches
@@ -1687,6 +1709,7 @@ export default function Live() {
             scorePrediction,
             bttsPrediction,
             livePredictions,
+            phasedPredictions: phasedPreds, // 🎯 NOUVEAU: Sauvegarder les 3 types de prédictions
             // IMPORTANT: Ne PAS toucher à liveData (préserver score et minute)
           }
         : m
@@ -2030,6 +2053,93 @@ export default function Live() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    )}
+
+                    {/* 🎯 PRÉDICTIONS PAR PHASE: 10 MIN / MI-TEMPS / FIN */}
+                    {match.phasedPredictions && (
+                      <div className="space-y-3">
+                        <div className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 border border-purple-700 rounded-lg p-3">
+                          <h4 className="text-base font-bold text-purple-200 flex items-center gap-2">
+                            🎯 PRÉDICTIONS PAR PHASE
+                          </h4>
+                          <p className="text-xs text-purple-300 mt-1">
+                            Scores projetés à différents moments du match
+                          </p>
+                        </div>
+
+                        {/* 🔮 Prochaines 10 minutes */}
+                        {match.phasedPredictions.next10Minutes && (
+                          <div className="bg-blue-900/20 border-2 border-blue-600 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className="text-sm font-bold text-blue-300 flex items-center gap-2">
+                                🔮 PROCHAINES 10 MINUTES
+                              </h5>
+                              <span className="text-blue-400 text-xs font-semibold">
+                                {match.phasedPredictions.next10Minutes.timeframe}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="text-white font-bold text-lg">
+                                {match.phasedPredictions.next10Minutes.homeScore} - {match.phasedPredictions.next10Minutes.awayScore}
+                              </div>
+                              <div className="text-blue-300 font-bold text-lg">
+                                {match.phasedPredictions.next10Minutes.confidence}%
+                              </div>
+                            </div>
+                            <div className="text-xs text-slate-300 mt-2">
+                              {match.phasedPredictions.next10Minutes.reasoning}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ⚽ Mi-temps (si minute < 45) */}
+                        {match.phasedPredictions.halfTime && (
+                          <div className="bg-green-900/20 border-2 border-green-600 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className="text-sm font-bold text-green-300 flex items-center gap-2">
+                                ⚽ SCORE À LA MI-TEMPS
+                              </h5>
+                              <span className="text-green-400 text-xs font-semibold">
+                                {match.phasedPredictions.halfTime.timeframe}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="text-white font-bold text-lg">
+                                {match.phasedPredictions.halfTime.homeScore} - {match.phasedPredictions.halfTime.awayScore}
+                              </div>
+                              <div className="text-green-300 font-bold text-lg">
+                                {match.phasedPredictions.halfTime.confidence}%
+                              </div>
+                            </div>
+                            <div className="text-xs text-slate-300 mt-2">
+                              {match.phasedPredictions.halfTime.reasoning}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 🏁 Fin du match */}
+                        <div className="bg-orange-900/20 border-2 border-orange-600 rounded-lg p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="text-sm font-bold text-orange-300 flex items-center gap-2">
+                              🏁 SCORE FINAL
+                            </h5>
+                            <span className="text-orange-400 text-xs font-semibold">
+                              {match.phasedPredictions.fullTime.timeframe}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="text-white font-bold text-lg">
+                              {match.phasedPredictions.fullTime.homeScore} - {match.phasedPredictions.fullTime.awayScore}
+                            </div>
+                            <div className="text-orange-300 font-bold text-lg">
+                              {match.phasedPredictions.fullTime.confidence}%
+                            </div>
+                          </div>
+                          <div className="text-xs text-slate-300 mt-2">
+                            {match.phasedPredictions.fullTime.reasoning}
+                          </div>
+                        </div>
                       </div>
                     )}
 

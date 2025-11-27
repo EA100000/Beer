@@ -71,16 +71,28 @@ export function validateLiveData(data: LiveMatchData): ValidationResult {
   // ========================================================================
   // VALIDATION 3: TIRS (CRITÈRE LE PLUS IMPORTANT)
   // ========================================================================
-  if (data.homeShotsOnTarget > data.homeTotalShots) {
+  // Assouplissement: Tolérer une différence de ±1 pour erreurs de parsing
+  if (data.homeShotsOnTarget > data.homeTotalShots + 1) {
     errors.push(
       `❌ INCOHÉRENCE CRITIQUE: Tirs cadrés domicile (${data.homeShotsOnTarget}) > ` +
       `tirs totaux (${data.homeTotalShots})`
     );
+  } else if (data.homeShotsOnTarget > data.homeTotalShots) {
+    warnings.push(
+      `⚠️ Tirs cadrés domicile (${data.homeShotsOnTarget}) légèrement > ` +
+      `tirs totaux (${data.homeTotalShots}) - possible erreur parsing`
+    );
   }
-  if (data.awayShotsOnTarget > data.awayTotalShots) {
+
+  if (data.awayShotsOnTarget > data.awayTotalShots + 1) {
     errors.push(
       `❌ INCOHÉRENCE CRITIQUE: Tirs cadrés extérieur (${data.awayShotsOnTarget}) > ` +
       `tirs totaux (${data.awayTotalShots})`
+    );
+  } else if (data.awayShotsOnTarget > data.awayTotalShots) {
+    warnings.push(
+      `⚠️ Tirs cadrés extérieur (${data.awayShotsOnTarget}) légèrement > ` +
+      `tirs totaux (${data.awayTotalShots}) - possible erreur parsing`
     );
   }
 
@@ -96,10 +108,16 @@ export function validateLiveData(data: LiveMatchData): ValidationResult {
   // VALIDATION 4: POSSESSIONS (DOIT TOTALISER ~100%)
   // ========================================================================
   const totalPossession = data.homePossession + data.awayPossession;
-  if (totalPossession < 95 || totalPossession > 105) {
+  // Assouplissement: Tolérer 90-110% au lieu de 95-105% pour erreurs d'arrondi
+  if (totalPossession < 90 || totalPossession > 110) {
     errors.push(
       `❌ INCOHÉRENCE CRITIQUE: Possessions totales = ${totalPossession}% ` +
       `(attendu ~100%)`
+    );
+  } else if (totalPossession < 95 || totalPossession > 105) {
+    warnings.push(
+      `⚠️ Possessions totales = ${totalPossession}% (attendu ~100%, ` +
+      `possible erreur d'arrondi)`
     );
   }
 
@@ -114,16 +132,28 @@ export function validateLiveData(data: LiveMatchData): ValidationResult {
   // ========================================================================
   // VALIDATION 5: CARTONS VS FAUTES
   // ========================================================================
-  if (data.homeYellowCards > data.homeFouls) {
+  // Assouplissement: Tolérer égalité (cartons = fautes) car certains cartons directs ne comptent pas comme fautes
+  if (data.homeYellowCards > data.homeFouls + 1) {
     errors.push(
       `❌ INCOHÉRENCE CRITIQUE: Cartons jaunes dom (${data.homeYellowCards}) > ` +
       `fautes (${data.homeFouls})`
     );
+  } else if (data.homeYellowCards > data.homeFouls) {
+    warnings.push(
+      `⚠️ Cartons jaunes dom (${data.homeYellowCards}) ≥ fautes (${data.homeFouls}) ` +
+      `- possible carton direct sans faute`
+    );
   }
-  if (data.awayYellowCards > data.awayFouls) {
+
+  if (data.awayYellowCards > data.awayFouls + 1) {
     errors.push(
       `❌ INCOHÉRENCE CRITIQUE: Cartons jaunes ext (${data.awayYellowCards}) > ` +
       `fautes (${data.awayFouls})`
+    );
+  } else if (data.awayYellowCards > data.awayFouls) {
+    warnings.push(
+      `⚠️ Cartons jaunes ext (${data.awayYellowCards}) ≥ fautes (${data.awayFouls}) ` +
+      `- possible carton direct sans faute`
     );
   }
 
@@ -242,14 +272,18 @@ export function quickValidate(data: LiveMatchData): boolean {
 
   if (data.minute < 0 || data.minute > 120) return false;
   if (data.homeScore < 0 || data.awayScore < 0) return false;
-  if (data.homeShotsOnTarget > data.homeTotalShots) return false;
-  if (data.awayShotsOnTarget > data.awayTotalShots) return false;
+
+  // Assouplissement: Tolérer ±1 pour erreurs de parsing
+  if (data.homeShotsOnTarget > data.homeTotalShots + 1) return false;
+  if (data.awayShotsOnTarget > data.awayTotalShots + 1) return false;
 
   const totalPossession = data.homePossession + data.awayPossession;
-  if (totalPossession < 95 || totalPossession > 105) return false;
+  // Assouplissement: 90-110% au lieu de 95-105%
+  if (totalPossession < 90 || totalPossession > 110) return false;
 
-  if (data.homeYellowCards > data.homeFouls) return false;
-  if (data.awayYellowCards > data.awayFouls) return false;
+  // Assouplissement: Tolérer +1 pour cartons directs
+  if (data.homeYellowCards > data.homeFouls + 1) return false;
+  if (data.awayYellowCards > data.awayFouls + 1) return false;
 
   return true;
 }

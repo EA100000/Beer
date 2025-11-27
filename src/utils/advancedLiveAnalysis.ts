@@ -219,18 +219,28 @@ export function enrichLiveData(
   const attackingThirdActivityHome = liveData.homeTacklesInAttackingThird + liveData.homeTouchesInBox;
   const attackingThirdActivityAway = liveData.awayTacklesInAttackingThird + liveData.awayTouchesInBox;
 
-  const pressureIndexHome = (liveData.awayBallsLost + liveData.homeInterceptions) / minutesSafe;
-  const pressureIndexAway = (liveData.homeBallsLost + liveData.awayInterceptions) / minutesSafe;
+  // 🛡️ Protection anti-NaN pour les taux par minute
+  const pressureIndexHome = isFinite((liveData.awayBallsLost + liveData.homeInterceptions) / minutesSafe)
+    ? (liveData.awayBallsLost + liveData.homeInterceptions) / minutesSafe
+    : 0;
+  const pressureIndexAway = isFinite((liveData.homeBallsLost + liveData.awayInterceptions) / minutesSafe)
+    ? (liveData.homeBallsLost + liveData.awayInterceptions) / minutesSafe
+    : 0;
 
-  const dangerCreationRateHome = liveData.homeBigChances / minutesSafe;
-  const dangerCreationRateAway = liveData.awayBigChances / minutesSafe;
+  const dangerCreationRateHome = isFinite(liveData.homeBigChances / minutesSafe)
+    ? liveData.homeBigChances / minutesSafe
+    : 0;
+  const dangerCreationRateAway = isFinite(liveData.awayBigChances / minutesSafe)
+    ? liveData.awayBigChances / minutesSafe
+    : 0;
 
   // Expected Goals (modèle simplifié)
   const xGoalsHome = (liveData.homeShotsOnTarget * 0.3 + liveData.homeBigChances * 0.6 + liveData.homeShotsInsideBox * 0.15) / 10;
   const xGoalsAway = (liveData.awayShotsOnTarget * 0.3 + liveData.awayBigChances * 0.6 + liveData.awayShotsInsideBox * 0.15) / 10;
 
-  const xGoalsRateHome = xGoalsHome / minutesSafe;
-  const xGoalsRateAway = xGoalsAway / minutesSafe;
+  // 🛡️ Protection anti-NaN pour xGoalsRate
+  const xGoalsRateHome = isFinite(xGoalsHome / minutesSafe) ? xGoalsHome / minutesSafe : 0.03;
+  const xGoalsRateAway = isFinite(xGoalsAway / minutesSafe) ? xGoalsAway / minutesSafe : 0.03;
 
   const tempoControlHome = (liveData.homePossession * passAccuracyHome) / 100;
   const tempoControlAway = (liveData.awayPossession * passAccuracyAway) / 100;
@@ -332,8 +342,13 @@ export function enrichLiveData(
   const counterAttackThreatHome = liveData.homeThroughPasses * (liveData.homeTotalShots / 10);
   const counterAttackThreatAway = liveData.awayThroughPasses * (liveData.awayTotalShots / 10);
 
-  const setPieceDangerHome = (liveData.homeCorners * 2 + liveData.homeFreeKicks) / minutesSafe;
-  const setPieceDangerAway = (liveData.awayCorners * 2 + liveData.awayFreeKicks) / minutesSafe;
+  // 🛡️ Protection anti-NaN pour setPieceDanger
+  const setPieceDangerHome = isFinite((liveData.homeCorners * 2 + liveData.homeFreeKicks) / minutesSafe)
+    ? (liveData.homeCorners * 2 + liveData.homeFreeKicks) / minutesSafe
+    : 0;
+  const setPieceDangerAway = isFinite((liveData.awayCorners * 2 + liveData.awayFreeKicks) / minutesSafe)
+    ? (liveData.awayCorners * 2 + liveData.awayFreeKicks) / minutesSafe
+    : 0;
 
   const pressureAppliedHome = liveData.homeTacklesInAttackingThird + liveData.awayBallsLost;
   const pressureAppliedAway = liveData.awayTacklesInAttackingThird + liveData.homeBallsLost;
@@ -479,33 +494,45 @@ export function enrichLiveData(
   // ==================== PROJECTIONS AVANCÉES ====================
   const minutesLeft = Math.max(0, 90 - minute);
 
-  // Projection score final (méthode hybride)
-  const projectedGoalsHome = homeScore + (xGoalsRateHome * minutesLeft);
-  const projectedGoalsAway = awayScore + (xGoalsRateAway * minutesLeft);
+  // 🛡️ Projection score final (méthode hybride) avec protection anti-NaN
+  const projectedGoalsHome = isFinite(homeScore + (xGoalsRateHome * minutesLeft))
+    ? homeScore + (xGoalsRateHome * minutesLeft)
+    : homeScore;
+  const projectedGoalsAway = isFinite(awayScore + (xGoalsRateAway * minutesLeft))
+    ? awayScore + (xGoalsRateAway * minutesLeft)
+    : awayScore;
 
   const projectedCorners = Math.round(
     (liveData.homeCorners + liveData.awayCorners) +
-    ((cornerFrequencyHome + cornerFrequencyAway) * minutesLeft)
+    (isFinite((cornerFrequencyHome + cornerFrequencyAway) * minutesLeft)
+      ? (cornerFrequencyHome + cornerFrequencyAway) * minutesLeft
+      : 0)
   );
 
+  const foulRate = (liveData.homeFouls + liveData.awayFouls) / minutesSafe;
   const projectedFouls = Math.round(
     (liveData.homeFouls + liveData.awayFouls) +
-    ((liveData.homeFouls + liveData.awayFouls) / minutesSafe * minutesLeft)
+    (isFinite(foulRate * minutesLeft) ? foulRate * minutesLeft : 0)
   );
 
+  const cardRate = (liveData.homeYellowCards + liveData.awayYellowCards) / minutesSafe;
   const projectedCards = Math.round(
     (liveData.homeYellowCards + liveData.awayYellowCards) +
-    ((liveData.homeYellowCards + liveData.awayYellowCards) / minutesSafe * minutesLeft)
+    (isFinite(cardRate * minutesLeft) ? cardRate * minutesLeft : 0)
   );
 
   const projectedShots = Math.round(
     (liveData.homeTotalShots + liveData.awayTotalShots) +
-    ((shotFrequencyHome + shotFrequencyAway) * minutesLeft)
+    (isFinite((shotFrequencyHome + shotFrequencyAway) * minutesLeft)
+      ? (shotFrequencyHome + shotFrequencyAway) * minutesLeft
+      : 0)
   );
 
   const projectedBigChances = Math.round(
     (liveData.homeBigChances + liveData.awayBigChances) +
-    ((dangerCreationRateHome + dangerCreationRateAway) * minutesLeft)
+    (isFinite((dangerCreationRateHome + dangerCreationRateAway) * minutesLeft)
+      ? (dangerCreationRateHome + dangerCreationRateAway) * minutesLeft
+      : 0)
   );
 
   // Likelihood calculées
