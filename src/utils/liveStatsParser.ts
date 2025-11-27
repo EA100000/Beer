@@ -180,16 +180,17 @@ export function parseLiveStats(text: string): ParsedLiveStats {
         const keywordFound = keywords.some(kw => line.includes(kw.toLowerCase()));
 
         if (keywordFound) {
-          // Stratégie 1: Format avec fractions "19/36 53% Longs ballons 41% 17/41"
-          const fractionMatch = lines[i].match(/(\d+)\/\d+.*?(\d+)\/\d+/);
-          if (fractionMatch) {
-            return [parseInt(fractionMatch[1]), parseInt(fractionMatch[2])];
-          }
-
-          // Stratégie 2: Format pourcentage "60% Possession 41%"
+          // 🎯 CORRECTION 1M$ - Stratégie 1: TOUJOURS extraire % en PRIORITÉ
+          // Format: "32/74 43% Duels au sol 57% 42/74" → [43, 57] (les %)
           const percentMatch = lines[i].match(/(\d+)%.*?(\d+)%/);
           if (percentMatch) {
             return [parseInt(percentMatch[1]), parseInt(percentMatch[2])];
+          }
+
+          // Stratégie 2: Format avec fractions "19 Longs ballons 17" (sans %)
+          const fractionMatch = lines[i].match(/(\d+)\/\d+.*?(\d+)\/\d+/);
+          if (fractionMatch) {
+            return [parseInt(fractionMatch[1]), parseInt(fractionMatch[2])];
           }
 
           // Stratégie 3: Format inline "3 Corner 0"
