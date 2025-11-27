@@ -1,5 +1,20 @@
 import { TeamStats } from '../types/football';
 
+// 🛡️ PROTECTION #12: Helper pour divisions sécurisées (1M$)
+function safeDiv(numerator: number, denominator: number, fallback: number = 0): number {
+  if (!isFinite(numerator) || !isFinite(denominator) || denominator === 0) {
+    return fallback;
+  }
+  const result = numerator / denominator;
+  return isFinite(result) ? result : fallback;
+}
+
+// 🛡️ PROTECTION #13: Normalisation sécurisée [0,1]
+function safeNormalize(value: number, min: number = 0, max: number = 1): number {
+  if (!isFinite(value)) return (min + max) / 2; // Retourne milieu si NaN
+  return Math.max(min, Math.min(max, value));
+}
+
 // Données ultra-précises basées sur l'analyse de 200,000+ matchs
 const ULTRA_PRECISE_DATA = {
   // Facteurs de corrélation avancés
@@ -190,12 +205,13 @@ function calculateUltraPreciseForm(team: TeamStats, matches: number = 8): number
   const weights = [0.4, 0.25, 0.15, 0.1, 0.05, 0.03, 0.015, 0.005];
   
   // Calcul de la forme basé sur plusieurs métriques
-  const goalDifference = team.goalsPerMatch - team.goalsConcededPerMatch;
-  const shotsEfficiency = team.shotsOnTargetPerMatch / Math.max(team.goalsPerMatch, 0.1);
-  const defensiveStability = team.cleanSheets / Math.max(team.matches, 1);
-  const attackingConsistency = team.bigChancesPerMatch / Math.max(team.goalsPerMatch, 0.1);
-  const possessionEfficiency = team.possession / 100;
-  const accuracyEfficiency = team.accuracyPerMatch / 100;
+  // 🛡️ PROTECTION: Toutes les divisions sécurisées
+  const goalDifference = (team.goalsPerMatch || 0) - (team.goalsConcededPerMatch || 0);
+  const shotsEfficiency = safeDiv(team.shotsOnTargetPerMatch, Math.max(team.goalsPerMatch, 0.1), 1);
+  const defensiveStability = safeDiv(team.cleanSheets, Math.max(team.matches, 1), 0.5);
+  const attackingConsistency = safeDiv(team.bigChancesPerMatch, Math.max(team.goalsPerMatch, 0.1), 1);
+  const possessionEfficiency = safeDiv(team.possession, 100, 0.5);
+  const accuracyEfficiency = safeDiv(team.accuracyPerMatch, 100, 0.5);
   
   // Simulation de la forme sur les 8 derniers matchs
   const formFactors = [
@@ -211,29 +227,31 @@ function calculateUltraPreciseForm(team: TeamStats, matches: number = 8): number
   
   const weightedForm = formFactors.slice(0, Math.min(matches, 8))
     .reduce((sum, factor, index) => sum + factor * weights[index], 0);
-  
-  return Math.max(0, Math.min(1, 0.5 + weightedForm * 0.5));
+
+  // 🛡️ PROTECTION: Normalisation sécurisée
+  return safeNormalize(0.5 + weightedForm * 0.5, 0, 1);
 }
 
 // Calcul de l'intensité ultra-précise
+// 🛡️ PROTECTION #14: Toutes divisions sécurisées
 function calculateUltraPreciseIntensity(homeTeam: TeamStats, awayTeam: TeamStats): number {
-  const homeIntensity = 
-    (homeTeam.duelsWonPerMatch / 50) * 0.25 +
-    (homeTeam.yellowCardsPerMatch / 5) * 0.2 +
-    (homeTeam.tacklesPerMatch / 20) * 0.25 +
-    (homeTeam.interceptionsPerMatch / 15) * 0.15 +
-    (homeTeam.clearancesPerMatch / 30) * 0.1 +
-    (homeTeam.offsidesPerMatch / 5) * 0.05;
-  
-  const awayIntensity = 
-    (awayTeam.duelsWonPerMatch / 50) * 0.25 +
-    (awayTeam.yellowCardsPerMatch / 5) * 0.2 +
-    (awayTeam.tacklesPerMatch / 20) * 0.25 +
-    (awayTeam.interceptionsPerMatch / 15) * 0.15 +
-    (awayTeam.clearancesPerMatch / 30) * 0.1 +
-    (awayTeam.offsidesPerMatch / 5) * 0.05;
-  
-  return (homeIntensity + awayIntensity) / 2;
+  const homeIntensity =
+    safeDiv(homeTeam.duelsWonPerMatch, 50, 0) * 0.25 +
+    safeDiv(homeTeam.yellowCardsPerMatch, 5, 0) * 0.2 +
+    safeDiv(homeTeam.tacklesPerMatch, 20, 0) * 0.25 +
+    safeDiv(homeTeam.interceptionsPerMatch, 15, 0) * 0.15 +
+    safeDiv(homeTeam.clearancesPerMatch, 30, 0) * 0.1 +
+    safeDiv(homeTeam.offsidesPerMatch, 5, 0) * 0.05;
+
+  const awayIntensity =
+    safeDiv(awayTeam.duelsWonPerMatch, 50, 0) * 0.25 +
+    safeDiv(awayTeam.yellowCardsPerMatch, 5, 0) * 0.2 +
+    safeDiv(awayTeam.tacklesPerMatch, 20, 0) * 0.25 +
+    safeDiv(awayTeam.interceptionsPerMatch, 15, 0) * 0.15 +
+    safeDiv(awayTeam.clearancesPerMatch, 30, 0) * 0.1 +
+    safeDiv(awayTeam.offsidesPerMatch, 5, 0) * 0.05;
+
+  return safeDiv(homeIntensity + awayIntensity, 2, 0.5);
 }
 
 // Calcul de la pression défensive ultra-précise

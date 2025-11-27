@@ -11,34 +11,138 @@ import {
 } from './realWorldConstants';
 
 // Advanced statistical functions for football analytics
+// 🛡️ PROTECTION #9: Poisson en log-space pour éviter overflow (1M$)
 function poissonProbability(lambda: number, k: number): number {
   if (lambda <= 0) return k === 0 ? 1 : 0;
-  return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+  if (k < 0 || !isFinite(k)) return 0;
+
+  const kInt = Math.floor(k);
+
+  // Pour k > 100 ou lambda > 50, utiliser log-space
+  if (kInt > 100 || lambda > 50) {
+    // log(P(k; λ)) = k*log(λ) - λ - log(k!)
+    const logProb = kInt * Math.log(lambda) - lambda - logFactorial(kInt);
+    return Math.exp(logProb);
+  }
+
+  // Calcul standard pour valeurs normales
+  return (Math.pow(lambda, kInt) * Math.exp(-lambda)) / factorial(kInt);
 }
 
+// 🛡️ PROTECTION #8: Factorial avec cache et limite pour 1M$
+const factorialCache: number[] = [1]; // 0! = 1
+
 function factorial(n: number): number {
-  if (n <= 1) return 1;
-  return n * factorial(n - 1);
+  // Protection contre valeurs absurdes
+  if (n < 0 || !isFinite(n)) return 1;
+  if (n > 170) {
+    // factorial(171) = Infinity en JavaScript
+    // Utiliser approximation de Stirling en log-space
+    return Math.exp(logFactorial(n));
+  }
+
+  const nInt = Math.floor(n);
+  if (nInt <= 1) return 1;
+
+  // Cache lookup
+  if (factorialCache[nInt] !== undefined) {
+    return factorialCache[nInt];
+  }
+
+  // Calculer de manière itérative (pas récursive!)
+  let result = factorialCache.length > 0 ? factorialCache[factorialCache.length - 1] : 1;
+  for (let i = factorialCache.length; i <= nInt; i++) {
+    result *= i;
+    factorialCache[i] = result;
+  }
+
+  return factorialCache[nInt];
+}
+
+// Log-factorial pour grandes valeurs (Stirling's approximation)
+function logFactorial(n: number): number {
+  if (n <= 1) return 0;
+  // ln(n!) ≈ n*ln(n) - n + 0.5*ln(2πn)
+  return n * Math.log(n) - n + 0.5 * Math.log(2 * Math.PI * n);
 }
 
 // Negative Binomial for overdispersion handling
+// 🛡️ PROTECTION #11: Negative Binomial en log-space pour 1M$
 function negativeBinomialProbability(r: number, p: number, k: number): number {
-  const coeff = gamma(k + r) / (factorial(k) * gamma(r));
-  return coeff * Math.pow(p, r) * Math.pow(1 - p, k);
+  // Protections input
+  if (r <= 0 || p <= 0 || p >= 1 || k < 0 || !isFinite(r) || !isFinite(p) || !isFinite(k)) return 0;
+
+  const kInt = Math.floor(k);
+
+  // Log-space pour grandes valeurs
+  if (kInt > 50 || r > 50) {
+    // log(NB(k; r, p)) = log(Γ(k+r)) - log(k!) - log(Γ(r)) + r*log(p) + k*log(1-p)
+    const logCoeff = logGamma(kInt + r) - logFactorial(kInt) - logGamma(r);
+    const logProb = logCoeff + r * Math.log(p) + kInt * Math.log(1 - p);
+    const result = Math.exp(logProb);
+    return isFinite(result) ? result : 0;
+  }
+
+  // Calcul standard pour petites valeurs
+  const coeff = gamma(kInt + r) / (factorial(kInt) * gamma(r));
+  const result = coeff * Math.pow(p, r) * Math.pow(1 - p, kInt);
+  return isFinite(result) ? result : 0;
+}
+
+// Log-Gamma pour grandes valeurs (Lanczos approximation)
+function logGamma(z: number): number {
+  if (z <= 0) return Infinity;
+  if (z < 0.5) {
+    // Reflection formula: Γ(z) = π / (sin(πz) * Γ(1-z))
+    return Math.log(Math.PI) - Math.log(Math.sin(Math.PI * z)) - logGamma(1 - z);
+  }
+
+  z -= 1;
+  const coefficients = [
+    0.99999999999980993,
+    676.5203681218851,
+    -1259.1392167224028,
+    771.32342877765313,
+    -176.61502916214059,
+    12.507343278686905,
+    -0.13857109526572012,
+    0.0000999580419715
+  ];
+
+  let x = coefficients[0];
+  for (let i = 1; i < coefficients.length; i++) {
+    x += coefficients[i] / (z + i);
+  }
+
+  const t = z + coefficients.length - 1.5;
+  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
 }
 
 function gamma(z: number): number {
-  // Approximation de Stirling pour la fonction gamma
-  if (z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+  // Protection stack overflow - limite récursion
+  if (z <= 0 || !isFinite(z)) return 1;
+  if (z > 171) return Math.exp(logGamma(z)); // gamma(172) = Infinity
+
+  // Utiliser log-gamma pour valeurs moyennes/grandes
+  if (z > 50) return Math.exp(logGamma(z));
+
+  // Reflection formula SANS récursion pour z < 0.5
+  if (z < 0.5) {
+    const sinPiZ = Math.sin(Math.PI * z);
+    if (Math.abs(sinPiZ) < 1e-10) return Infinity; // Pôle
+    return Math.PI / (sinPiZ * gamma(1 - z));
+  }
+
+  // Lanczos approximation standard
   z -= 1;
   let x = 0.99999999999980993;
-  const coefficients = [676.5203681218851, -1259.1392167224028, 771.32342877765313, 
+  const coefficients = [676.5203681218851, -1259.1392167224028, 771.32342877765313,
                        -176.61502916214059, 12.507343278686905, -0.13857109526572012];
-  
+
   for (let i = 0; i < coefficients.length; i++) {
     x += coefficients[i] / (z + i + 1);
   }
-  
+
   const t = z + coefficients.length - 0.5;
   return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
 }
@@ -60,19 +164,45 @@ function dixonColesAdjustment(homeGoals: number, awayGoals: number, lambda1: num
 }
 
 // Bivariate Poisson for goal correlation
+// 🛡️ PROTECTION #10: Optimisé avec log-space pour 1M$
 function bivariatePoisson(x: number, y: number, lambda1: number, lambda2: number, lambda3: number): number {
+  // Protections input
+  if (lambda1 <= 0 || lambda2 <= 0 || lambda3 < 0) return 0;
+  if (x < 0 || y < 0 || !isFinite(x) || !isFinite(y)) return 0;
+
+  const xInt = Math.floor(x);
+  const yInt = Math.floor(y);
+  const maxK = Math.min(xInt, yInt);
+
+  // Terme constant (calculé UNE SEULE FOIS)
+  const expTerm = Math.exp(-(lambda1 + lambda2 + lambda3));
+
   let prob = 0;
-  const maxK = Math.min(x, y);
-  
   for (let k = 0; k <= maxK; k++) {
-    const term1 = Math.exp(-(lambda1 + lambda2 + lambda3));
-    const term2 = Math.pow(lambda1, x - k) / factorial(x - k);
-    const term3 = Math.pow(lambda2, y - k) / factorial(y - k);
-    const term4 = Math.pow(lambda3, k) / factorial(k);
-    prob += term1 * term2 * term3 * term4;
+    // Utiliser log-space si valeurs grandes
+    if (xInt > 20 || yInt > 20 || k > 20) {
+      // log-space: log(term) = (x-k)*log(λ1) - log((x-k)!)
+      const logTerm2 = (xInt - k) * Math.log(lambda1) - logFactorial(xInt - k);
+      const logTerm3 = (yInt - k) * Math.log(lambda2) - logFactorial(yInt - k);
+      const logTerm4 = k * Math.log(Math.max(lambda3, 1e-10)) - logFactorial(k);
+      const term = Math.exp(logTerm2 + logTerm3 + logTerm4);
+      prob += expTerm * term;
+    } else {
+      // Calcul standard pour petites valeurs
+      const term2 = Math.pow(lambda1, xInt - k) / factorial(xInt - k);
+      const term3 = Math.pow(lambda2, yInt - k) / factorial(yInt - k);
+      const term4 = Math.pow(lambda3, k) / factorial(k);
+      prob += expTerm * term2 * term3 * term4;
+    }
+
+    // Protection overflow
+    if (!isFinite(prob)) {
+      console.warn(`[bivariatePoisson] Overflow détecté: x=${xInt}, y=${yInt}, k=${k}`);
+      return 0;
+    }
   }
-  
-  return prob;
+
+  return Math.min(1, Math.max(0, prob)); // Probabilité entre [0,1]
 }
 
 // Enhanced Elo with form and venue adjustments
