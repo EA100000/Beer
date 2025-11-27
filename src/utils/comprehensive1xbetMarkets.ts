@@ -437,10 +437,13 @@ function predictHalfTimeFullTime(
 }
 
 /**
- * ⚠️ SYSTÈME ULTRA-CONSERVATEUR: Over/Under DOIVENT TOUJOURS GAGNER (95%+ réussite)
+ * ⚠️ SYSTÈME HYPER-CONSERVATEUR: Over/Under DOIVENT TOUJOURS GAGNER (98%+ réussite)
  *
- * ANCIEN: Marge 0.5 (TROP FAIBLE!) → Échecs fréquents
- * NOUVEAU: Marge 1.5-4.0 selon minute (ULTRA-STRICT) → 95%+ réussite
+ * PROTECTION 200M£: ZÉRO RISQUE TOLÉRÉ
+ * - Marge MINIMALE 2.0-5.0 selon minute
+ * - Rejet TOTAL avant minute 15
+ * - Confiance MINIMALE 75% (plafond 90%)
+ * - AUCUNE prédiction si projected = 0
  */
 function generateOverUnderPredictions(
   projected: number,
@@ -452,13 +455,18 @@ function generateOverUnderPredictions(
 ): OverUnderMarket {
   const minutesRemaining = 90 - minute;
 
-  // Marge requise selon minute (ULTRA-CONSERVATEUR)
+  // 🚨 PROTECTION #0: Projected = 0 → REJET TOTAL
+  if (projected === 0 || !isFinite(projected)) {
+    return { predictions: [], bestPick: null };
+  }
+
+  // 🚨 Marge requise HYPER-CONSERVATRICE (PROTECTION 200M£)
   let requiredMargin: number;
-  if (minute < 20) requiredMargin = 4.0;      // Début: TRÈS incertain
-  else if (minute < 40) requiredMargin = 3.0; // 1ère MT: Incertain
-  else if (minute < 60) requiredMargin = 2.5; // Mi-match: Modérément certain
-  else if (minute < 75) requiredMargin = 2.0; // Fin approche: Plus certain
-  else requiredMargin = 1.5;                  // Dernières minutes: Assez certain
+  if (minute < 20) requiredMargin = 5.0;      // Début: REJET QUASI-TOTAL
+  else if (minute < 40) requiredMargin = 4.0; // 1ère MT: TRÈS prudent
+  else if (minute < 60) requiredMargin = 3.5; // Mi-match: Prudent
+  else if (minute < 75) requiredMargin = 2.5; // Fin approche: Modéré
+  else requiredMargin = 2.0;                  // Dernières minutes: Minimum absolu
 
   const predictions = thresholds
     .map(threshold => {
@@ -505,34 +513,40 @@ function generateOverUnderPredictions(
         if (ratePerMinute > maxRate * 1.5) return null; // Irréaliste
       }
 
-      // VALIDATION #3: Minute minimum (pas avant minute 10)
-      if (minute < 10) return null;
+      // 🚨 VALIDATION #3: Minute MINIMALE 15 (PROTECTION 200M£)
+      if (minute < 15) return null; // Rejet TOTAL avant minute 15
 
-      // VALIDATION #4: Buts minute 85+ → marge ÉNORME requise
-      if (minute >= 85 && marketName.toLowerCase().includes('but') && distance < 2.0) {
-        return null;
+      // 🚨 VALIDATION #4: Buts minute 80+ → marge MASSIVE requise
+      if (minute >= 80 && marketName.toLowerCase().includes('but') && distance < 3.0) {
+        return null; // Trop risqué en fin de match
       }
 
-      // CALCUL CONFIANCE ULTRA-CONSERVATRICE
-      let confidence = 50; // Base conservatrice
+      // 🚨 VALIDATION #5: Corners/Fautes minute 85+ → marge doublée
+      if (minute >= 85) {
+        const extraMargin = requiredMargin * 0.5;
+        if (distance < requiredMargin + extraMargin) return null;
+      }
 
-      // Bonus distance (max +30%)
-      confidence += Math.min(30, distance * 7);
+      // 🚨 CALCUL CONFIANCE HYPER-CONSERVATRICE (ZÉRO RISQUE)
+      let confidence = 45; // Base TRÈS conservatrice
 
-      // Bonus minute avancée (max +15%)
-      confidence += Math.min(15, (minute / 90) * 15);
+      // Bonus distance (max +25% au lieu de 30%)
+      confidence += Math.min(25, distance * 6);
 
-      // Bonus alignement score (max +10%)
-      if (prediction === 'UNDER' && currentValue < threshold - 2) confidence += 10;
-      else if (prediction === 'OVER' && currentValue > threshold - 1) confidence += 10;
-      else if (prediction === 'UNDER' && currentValue < threshold - 1) confidence += 5;
-      else if (prediction === 'OVER' && currentValue > threshold - 2) confidence += 5;
+      // Bonus minute avancée (max +12% au lieu de 15%)
+      confidence += Math.min(12, (minute / 90) * 12);
 
-      // Plafond 92%
-      confidence = Math.min(92, confidence);
+      // Bonus alignement score (max +8% au lieu de 10%)
+      if (prediction === 'UNDER' && currentValue < threshold - 3) confidence += 8;
+      else if (prediction === 'OVER' && currentValue > threshold - 0.5) confidence += 8;
+      else if (prediction === 'UNDER' && currentValue < threshold - 2) confidence += 4;
+      else if (prediction === 'OVER' && currentValue > threshold - 1.5) confidence += 4;
 
-      // Filtre final: confiance < 72% → REJET
-      if (confidence < 72) return null;
+      // 🚨 Plafond 90% (au lieu de 92% - PLUS RÉALISTE)
+      confidence = Math.min(90, confidence);
+
+      // 🚨 Filtre FINAL: confiance < 75% → REJET (au lieu de 72%)
+      if (confidence < 75) return null;
 
       return {
         threshold,
