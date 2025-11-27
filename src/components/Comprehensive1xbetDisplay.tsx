@@ -284,6 +284,110 @@ export default function Comprehensive1xbetDisplay({ markets, homeTeam, awayTeam 
         )}
       </MarketSection>
 
+      {/* ========== RÉSULTAT DU MATCH (1X2 + Double Chance) ========== */}
+      <MarketSection title="🏆 RÉSULTAT DU MATCH" color="text-yellow-400">
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className={`p-3 rounded border-2 ${markets.matchResult.home.shouldBet ? 'bg-green-900/30 border-green-500' : 'bg-gray-900/20 border-gray-600'}`}>
+            <div className="text-center">
+              <div className="text-white font-bold text-xl mb-1">1</div>
+              <div className="text-gray-300 text-xs mb-2">{homeTeam}</div>
+              <div className={`font-bold text-lg ${markets.matchResult.home.shouldBet ? 'text-green-400' : 'text-gray-400'}`}>
+                {markets.matchResult.home.confidence}%
+              </div>
+              <div className="text-xs text-gray-400">Prob: {markets.matchResult.home.probability.toFixed(0)}%</div>
+              {markets.matchResult.home.shouldBet && (
+                <div className="mt-2 text-xs font-bold text-green-300">✅ À PARIER</div>
+              )}
+            </div>
+          </div>
+
+          <div className={`p-3 rounded border-2 ${markets.matchResult.draw.shouldBet ? 'bg-green-900/30 border-green-500' : 'bg-gray-900/20 border-gray-600'}`}>
+            <div className="text-center">
+              <div className="text-white font-bold text-xl mb-1">X</div>
+              <div className="text-gray-300 text-xs mb-2">Match Nul</div>
+              <div className={`font-bold text-lg ${markets.matchResult.draw.shouldBet ? 'text-green-400' : 'text-gray-400'}`}>
+                {markets.matchResult.draw.confidence}%
+              </div>
+              <div className="text-xs text-gray-400">Prob: {markets.matchResult.draw.probability.toFixed(0)}%</div>
+              {markets.matchResult.draw.shouldBet && (
+                <div className="mt-2 text-xs font-bold text-green-300">✅ À PARIER</div>
+              )}
+            </div>
+          </div>
+
+          <div className={`p-3 rounded border-2 ${markets.matchResult.away.shouldBet ? 'bg-green-900/30 border-green-500' : 'bg-gray-900/20 border-gray-600'}`}>
+            <div className="text-center">
+              <div className="text-white font-bold text-xl mb-1">2</div>
+              <div className="text-gray-300 text-xs mb-2">{awayTeam}</div>
+              <div className={`font-bold text-lg ${markets.matchResult.away.shouldBet ? 'text-green-400' : 'text-gray-400'}`}>
+                {markets.matchResult.away.confidence}%
+              </div>
+              <div className="text-xs text-gray-400">Prob: {markets.matchResult.away.probability.toFixed(0)}%</div>
+              {markets.matchResult.away.shouldBet && (
+                <div className="mt-2 text-xs font-bold text-green-300">✅ À PARIER</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="text-sm font-bold text-cyan-300 mb-2">DOUBLE CHANCE (Sécurité Maximale)</h4>
+          <div className={`p-3 rounded border ${markets.matchResult.doubleChance1X.shouldBet ? 'bg-cyan-900/30 border-cyan-500' : 'bg-gray-900/20 border-gray-600'}`}>
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="text-white font-bold">1X</span>
+                <span className="text-gray-400 text-sm ml-2">{homeTeam} ou Nul</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-gray-300 text-sm">Prob: {markets.matchResult.doubleChance1X.probability.toFixed(0)}%</span>
+                <span className={`font-bold ${markets.matchResult.doubleChance1X.shouldBet ? 'text-cyan-400' : 'text-gray-400'}`}>
+                  {markets.matchResult.doubleChance1X.confidence}%
+                </span>
+                {markets.matchResult.doubleChance1X.shouldBet && (
+                  <span className="text-xs font-bold text-green-300">✅</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className={`p-3 rounded border ${markets.matchResult.doubleChance12.shouldBet ? 'bg-cyan-900/30 border-cyan-500' : 'bg-gray-900/20 border-gray-600'}`}>
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="text-white font-bold">12</span>
+                <span className="text-gray-400 text-sm ml-2">Pas de Nul</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-gray-300 text-sm">Prob: {markets.matchResult.doubleChance12.probability.toFixed(0)}%</span>
+                <span className={`font-bold ${markets.matchResult.doubleChance12.shouldBet ? 'text-cyan-400' : 'text-gray-400'}`}>
+                  {markets.matchResult.doubleChance12.confidence}%
+                </span>
+                {markets.matchResult.doubleChance12.shouldBet && (
+                  <span className="text-xs font-bold text-green-300">✅</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className={`p-3 rounded border ${markets.matchResult.doubleChanceX2.shouldBet ? 'bg-cyan-900/30 border-cyan-500' : 'bg-gray-900/20 border-gray-600'}`}>
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="text-white font-bold">X2</span>
+                <span className="text-gray-400 text-sm ml-2">Nul ou {awayTeam}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-gray-300 text-sm">Prob: {markets.matchResult.doubleChanceX2.probability.toFixed(0)}%</span>
+                <span className={`font-bold ${markets.matchResult.doubleChanceX2.shouldBet ? 'text-cyan-400' : 'text-gray-400'}`}>
+                  {markets.matchResult.doubleChanceX2.confidence}%
+                </span>
+                {markets.matchResult.doubleChanceX2.shouldBet && (
+                  <span className="text-xs font-bold text-green-300">✅</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </MarketSection>
+
       {/* ========== MARCHÉS SPÉCIAUX ========== */}
       <MarketSection title="✨ MARCHÉS SPÉCIAUX" color="text-purple-400">
         <PredictionRow

@@ -104,6 +104,16 @@ export interface Comprehensive1xbetMarkets {
     bothTeamsScore2Plus: YesNoMarket;
   };
 
+  // 🆕 RÉSULTAT DU MATCH (1X2, Double Chance)
+  matchResult: {
+    home: MatchResultPrediction;      // 1 (Victoire Domicile)
+    draw: MatchResultPrediction;      // X (Match Nul)
+    away: MatchResultPrediction;      // 2 (Victoire Extérieur)
+    doubleChance1X: MatchResultPrediction;  // 1X (Domicile ou Nul)
+    doubleChance12: MatchResultPrediction;  // 12 (Domicile ou Extérieur)
+    doubleChanceX2: MatchResultPrediction;  // X2 (Nul ou Extérieur)
+  };
+
   // MI-TEMPS / FIN DE MATCH
   halfTimeFullTime: HalfTimeFullTimePrediction;
 }
@@ -129,6 +139,14 @@ export interface YesNoMarket {
   confidence: number;
   reasoning: string;
   probability: number;
+}
+
+export interface MatchResultPrediction {
+  prediction: '1' | 'X' | '2' | '1X' | '12' | 'X2';
+  confidence: number;
+  probability: number;
+  reasoning: string;
+  shouldBet: boolean; // true si confiance >= 75% (ULTRA-CONSERVATEUR)
 }
 
 /**
@@ -360,6 +378,16 @@ export function generateComprehensive1xbetMarkets(
     }
   };
 
+  // ============================================================================
+  // 🆕 RÉSULTAT DU MATCH (1X2 + Double Chance) - ULTRA-CONSERVATEUR
+  // ============================================================================
+  const matchResult = calculateMatchResult(
+    enrichedMetrics,
+    currentScore,
+    minute,
+    halfTimeFullTime
+  );
+
   return {
     goals,
     corners,
@@ -369,7 +397,137 @@ export function generateComprehensive1xbetMarkets(
     throwIns,
     offsides,
     specialMarkets,
+    matchResult,
     halfTimeFullTime
+  };
+}
+
+/**
+ * 🆕 CALCULE RÉSULTAT DU MATCH (1X2 + Double Chance)
+ * PROTECTION 200M£: Confiance MIN 75%, Rejet si minute < 30
+ */
+function calculateMatchResult(
+  enrichedMetrics: EnrichedLiveMetrics,
+  currentScore: { home: number; away: number },
+  minute: number,
+  halfTimeFullTime: HalfTimeFullTimePrediction
+): {
+  home: MatchResultPrediction;
+  draw: MatchResultPrediction;
+  away: MatchResultPrediction;
+  doubleChance1X: MatchResultPrediction;
+  doubleChance12: MatchResultPrediction;
+  doubleChanceX2: MatchResultPrediction;
+} {
+  const projectedHome = halfTimeFullTime.fullTime.homeScore;
+  const projectedAway = halfTimeFullTime.fullTime.awayScore;
+  const diff = projectedHome - projectedAway;
+
+  // 🚨 PROTECTION: Pas de prédiction avant minute 30 (TROP INCERTAIN)
+  const isReliable = minute >= 30;
+
+  // Calcul des probabilités (méthode Poisson simplifiée + momentum)
+  const homeAdvantage = enrichedMetrics.context.homeAdvantage || 0;
+  const momentumHome = enrichedMetrics.context.momentumHome || 50;
+  const momentumAway = enrichedMetrics.context.momentumAway || 50;
+
+  // Probabilités brutes basées sur projection + momentum
+  let prob1 = 0; // Victoire Domicile
+  let probX = 0; // Match Nul
+  let prob2 = 0; // Victoire Extérieur
+
+  if (diff >= 2) {
+    // Domicile largement favori
+    prob1 = 60 + diff * 10 + homeAdvantage * 2 + (momentumHome - 50) / 2;
+    probX = 25 - diff * 5;
+    prob2 = 15 - diff * 5 - homeAdvantage;
+  } else if (diff === 1) {
+    // Domicile léger favori
+    prob1 = 50 + homeAdvantage * 2 + (momentumHome - 50) / 2;
+    probX = 30;
+    prob2 = 20 - homeAdvantage;
+  } else if (diff === 0) {
+    // Match équilibré
+    prob1 = 35 + homeAdvantage + (momentumHome - 50) / 3;
+    probX = 35;
+    prob2 = 30 - homeAdvantage + (momentumAway - 50) / 3;
+  } else if (diff === -1) {
+    // Extérieur léger favori
+    prob1 = 25 + homeAdvantage;
+    probX = 30;
+    prob2 = 45 - homeAdvantage + (momentumAway - 50) / 2;
+  } else {
+    // Extérieur largement favori
+    prob1 = 15 + diff * 5 + homeAdvantage;
+    probX = 25 + diff * 5;
+    prob2 = 60 - diff * 10 - homeAdvantage + (momentumAway - 50) / 2;
+  }
+
+  // Normaliser à 100%
+  const total = prob1 + probX + prob2;
+  prob1 = (prob1 / total) * 100;
+  probX = (probX / total) * 100;
+  prob2 = (prob2 / total) * 100;
+
+  // 🚨 Confiances ULTRA-CONSERVATRICES
+  const baseConfidence = Math.min(60, 40 + (minute / 90) * 20);
+
+  const conf1 = Math.min(90, baseConfidence + (prob1 - 50));
+  const confX = Math.min(90, baseConfidence + (probX - 40));
+  const conf2 = Math.min(90, baseConfidence + (prob2 - 50));
+
+  // Double Chance (combinaisons)
+  const prob1X = prob1 + probX;
+  const prob12 = prob1 + prob2;
+  const probX2 = probX + prob2;
+
+  const conf1X = Math.min(90, baseConfidence + (prob1X - 70));
+  const conf12 = Math.min(90, baseConfidence + (prob12 - 70));
+  const confX2 = Math.min(90, baseConfidence + (probX2 - 70));
+
+  return {
+    home: {
+      prediction: '1',
+      confidence: isReliable ? Math.max(50, conf1) : 50,
+      probability: prob1,
+      reasoning: `Proj: ${projectedHome}-${projectedAway} | Momentum: ${momentumHome.toFixed(0)}% | Minute: ${minute}/90`,
+      shouldBet: isReliable && conf1 >= 75 && prob1 >= 55
+    },
+    draw: {
+      prediction: 'X',
+      confidence: isReliable ? Math.max(50, confX) : 50,
+      probability: probX,
+      reasoning: `Proj: ${projectedHome}-${projectedAway} équilibré | Minute: ${minute}/90`,
+      shouldBet: isReliable && confX >= 75 && probX >= 40
+    },
+    away: {
+      prediction: '2',
+      confidence: isReliable ? Math.max(50, conf2) : 50,
+      probability: prob2,
+      reasoning: `Proj: ${projectedHome}-${projectedAway} | Momentum: ${momentumAway.toFixed(0)}% | Minute: ${minute}/90`,
+      shouldBet: isReliable && conf2 >= 75 && prob2 >= 55
+    },
+    doubleChance1X: {
+      prediction: '1X',
+      confidence: isReliable ? Math.max(50, conf1X) : 50,
+      probability: prob1X,
+      reasoning: `Domicile OU Nul | Prob: ${prob1X.toFixed(0)}% | Minute: ${minute}/90`,
+      shouldBet: isReliable && conf1X >= 75 && prob1X >= 70
+    },
+    doubleChance12: {
+      prediction: '12',
+      confidence: isReliable ? Math.max(50, conf12) : 50,
+      probability: prob12,
+      reasoning: `Pas de Nul | Prob: ${prob12.toFixed(0)}% | Minute: ${minute}/90`,
+      shouldBet: isReliable && conf12 >= 75 && prob12 >= 70
+    },
+    doubleChanceX2: {
+      prediction: 'X2',
+      confidence: isReliable ? Math.max(50, confX2) : 50,
+      probability: probX2,
+      reasoning: `Nul OU Extérieur | Prob: ${probX2.toFixed(0)}% | Minute: ${minute}/90`,
+      shouldBet: isReliable && confX2 >= 75 && probX2 >= 70
+    }
   };
 }
 
