@@ -464,10 +464,18 @@ function calculateMatchResult(
   }
 
   // Normaliser à 100%
+  // 🛡️ PROTECTION #7: Éviter division par zéro si total = 0
   const total = prob1 + probX + prob2;
-  prob1 = (prob1 / total) * 100;
-  probX = (probX / total) * 100;
-  prob2 = (prob2 / total) * 100;
+  if (total > 0) {
+    prob1 = (prob1 / total) * 100;
+    probX = (probX / total) * 100;
+    prob2 = (prob2 / total) * 100;
+  } else {
+    // Fallback équilibré si données invalides
+    prob1 = 33.33;
+    probX = 33.33;
+    prob2 = 33.33;
+  }
 
   // 🚨 Confiances ULTRA-CONSERVATRICES
   const baseConfidence = Math.min(60, 40 + (minute / 90) * 20);

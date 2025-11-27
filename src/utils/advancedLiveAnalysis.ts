@@ -191,23 +191,34 @@ export function enrichLiveData(
   const dribbleSuccessAway = liveData.awaySuccessfulDribbles * 1.5;
 
   // ==================== INTENSITÉ & RYTHME ====================
-  const offensiveIntensityHome = (liveData.homeTotalShots + liveData.homeCorners + liveData.homeBigChances) / minutesSafe;
-  const offensiveIntensityAway = (liveData.awayTotalShots + liveData.awayCorners + liveData.awayBigChances) / minutesSafe;
+  // 🛡️ PROTECTION #6: Toutes les intensités et fréquences protégées contre NaN
+  const offensiveIntensityHomeRaw = (liveData.homeTotalShots + liveData.homeCorners + liveData.homeBigChances) / minutesSafe;
+  const offensiveIntensityAwayRaw = (liveData.awayTotalShots + liveData.awayCorners + liveData.awayBigChances) / minutesSafe;
+  const offensiveIntensityHome = isFinite(offensiveIntensityHomeRaw) ? offensiveIntensityHomeRaw : 0.5;
+  const offensiveIntensityAway = isFinite(offensiveIntensityAwayRaw) ? offensiveIntensityAwayRaw : 0.5;
 
-  const defensiveIntensityHome = (liveData.homeTackles + liveData.homeInterceptions + liveData.homeClearances) / minutesSafe;
-  const defensiveIntensityAway = (liveData.awayTackles + liveData.awayInterceptions + liveData.awayClearances) / minutesSafe;
+  const defensiveIntensityHomeRaw = (liveData.homeTackles + liveData.homeInterceptions + liveData.homeClearances) / minutesSafe;
+  const defensiveIntensityAwayRaw = (liveData.awayTackles + liveData.awayInterceptions + liveData.awayClearances) / minutesSafe;
+  const defensiveIntensityHome = isFinite(defensiveIntensityHomeRaw) ? defensiveIntensityHomeRaw : 0.3;
+  const defensiveIntensityAway = isFinite(defensiveIntensityAwayRaw) ? defensiveIntensityAwayRaw : 0.3;
 
-  const physicalIntensityHome = (liveData.homeFouls + liveData.homeTotalDuels / 100 * 50) / minutesSafe; // Duels % → Nombre estimé
-  const physicalIntensityAway = (liveData.awayFouls + liveData.awayTotalDuels / 100 * 50) / minutesSafe;
+  const physicalIntensityHomeRaw = (liveData.homeFouls + liveData.homeTotalDuels / 100 * 50) / minutesSafe;
+  const physicalIntensityAwayRaw = (liveData.awayFouls + liveData.awayTotalDuels / 100 * 50) / minutesSafe;
+  const physicalIntensityHome = isFinite(physicalIntensityHomeRaw) ? physicalIntensityHomeRaw : 0.3;
+  const physicalIntensityAway = isFinite(physicalIntensityAwayRaw) ? physicalIntensityAwayRaw : 0.3;
 
   const cardRateHome = liveData.homeFouls > 0 ? (liveData.homeYellowCards / liveData.homeFouls) * 100 : 0;
   const cardRateAway = liveData.awayFouls > 0 ? (liveData.awayYellowCards / liveData.awayFouls) * 100 : 0;
 
-  const shotFrequencyHome = liveData.homeTotalShots / minutesSafe;
-  const shotFrequencyAway = liveData.awayTotalShots / minutesSafe;
+  const shotFrequencyHomeRaw = liveData.homeTotalShots / minutesSafe;
+  const shotFrequencyAwayRaw = liveData.awayTotalShots / minutesSafe;
+  const shotFrequencyHome = isFinite(shotFrequencyHomeRaw) ? shotFrequencyHomeRaw : 0.22; // ~20 shots/90min
+  const shotFrequencyAway = isFinite(shotFrequencyAwayRaw) ? shotFrequencyAwayRaw : 0.22;
 
-  const cornerFrequencyHome = liveData.homeCorners / minutesSafe;
-  const cornerFrequencyAway = liveData.awayCorners / minutesSafe;
+  const cornerFrequencyHomeRaw = liveData.homeCorners / minutesSafe;
+  const cornerFrequencyAwayRaw = liveData.awayCorners / minutesSafe;
+  const cornerFrequencyHome = isFinite(cornerFrequencyHomeRaw) ? cornerFrequencyHomeRaw : 0.06; // ~5 corners/90min
+  const cornerFrequencyAway = isFinite(cornerFrequencyAwayRaw) ? cornerFrequencyAwayRaw : 0.06;
 
   const possessionEfficiencyHome = liveData.homePossession > 0
     ? ((liveData.homeTotalShots + liveData.homePassesInFinalThird) / liveData.homePossession) * 10
@@ -235,8 +246,11 @@ export function enrichLiveData(
     : 0;
 
   // Expected Goals (modèle simplifié)
-  const xGoalsHome = (liveData.homeShotsOnTarget * 0.3 + liveData.homeBigChances * 0.6 + liveData.homeShotsInsideBox * 0.15) / 10;
-  const xGoalsAway = (liveData.awayShotsOnTarget * 0.3 + liveData.awayBigChances * 0.6 + liveData.awayShotsInsideBox * 0.15) / 10;
+  // 🛡️ PROTECTION #5: xGoals avec fallback si NaN
+  const xGoalsHomeRaw = (liveData.homeShotsOnTarget * 0.3 + liveData.homeBigChances * 0.6 + liveData.homeShotsInsideBox * 0.15) / 10;
+  const xGoalsAwayRaw = (liveData.awayShotsOnTarget * 0.3 + liveData.awayBigChances * 0.6 + liveData.awayShotsInsideBox * 0.15) / 10;
+  const xGoalsHome = isFinite(xGoalsHomeRaw) ? xGoalsHomeRaw : 0.15; // Fallback: ~1.5 goals pour 90min
+  const xGoalsAway = isFinite(xGoalsAwayRaw) ? xGoalsAwayRaw : 0.15;
 
   // 🛡️ Protection anti-NaN pour xGoalsRate
   const xGoalsRateHome = isFinite(xGoalsHome / minutesSafe) ? xGoalsHome / minutesSafe : 0.03;
@@ -512,70 +526,84 @@ export function enrichLiveData(
   let projectedGoalsHome: number;
   let projectedGoalsAway: number;
 
-  if (minute < 15 && (xGoalsRateHome === 0.03 || xGoalsHome < 0.1)) {
+  // 🔍 CORRECTION CRITIQUE: Détecter données insuffisantes de manière ROBUSTE
+  const hasInsufficientData = minute < 15 && (
+    xGoalsRateHome <= 0.035 ||  // Très proche de fallback (0.03)
+    xGoalsRateAway <= 0.035 ||
+    xGoalsHome < 0.15 ||        // xG quasi-nul
+    xGoalsAway < 0.15
+  );
+
+  if (hasInsufficientData) {
     // Début de match: FALLBACK sur moyennes historiques
-    projectedGoalsHome = homeScore + (HISTORICAL_AVG.goalsPerMinute * minutesLeft / 2);
-    projectedGoalsAway = awayScore + (HISTORICAL_AVG.goalsPerMinute * minutesLeft / 2);
+    projectedGoalsHome = Math.max(homeScore, homeScore + (HISTORICAL_AVG.goalsPerMinute * minutesLeft / 2));
+    projectedGoalsAway = Math.max(awayScore, awayScore + (HISTORICAL_AVG.goalsPerMinute * minutesLeft / 2));
   } else {
     // Données live suffisantes
     projectedGoalsHome = isFinite(homeScore + (xGoalsRateHome * minutesLeft))
-      ? homeScore + (xGoalsRateHome * minutesLeft)
-      : homeScore + (HISTORICAL_AVG.goalsPerMinute * minutesLeft / 2);
+      ? Math.max(homeScore, homeScore + (xGoalsRateHome * minutesLeft))
+      : Math.max(homeScore, homeScore + (HISTORICAL_AVG.goalsPerMinute * minutesLeft / 2));
     projectedGoalsAway = isFinite(awayScore + (xGoalsRateAway * minutesLeft))
-      ? awayScore + (xGoalsRateAway * minutesLeft)
-      : awayScore + (HISTORICAL_AVG.goalsPerMinute * minutesLeft / 2);
+      ? Math.max(awayScore, awayScore + (xGoalsRateAway * minutesLeft))
+      : Math.max(awayScore, awayScore + (HISTORICAL_AVG.goalsPerMinute * minutesLeft / 2));
   }
 
-  // 🛡️ Projection CORNERS: Hybride avec fallback
-  const cornerRate = (liveData.homeCorners + liveData.awayCorners) / minutesSafe;
-  const projectedCorners = Math.round(
-    (liveData.homeCorners + liveData.awayCorners) +
+  // 🛡️ Projection CORNERS: Hybride avec fallback + PROTECTION MINIMUM
+  const currentCorners = liveData.homeCorners + liveData.awayCorners;
+  const cornerRate = currentCorners / minutesSafe;
+  const projectedCorners = Math.max(currentCorners, Math.round(
+    currentCorners +
     (minute < 15 && cornerRate < 0.05
       ? HISTORICAL_AVG.cornersPerMinute * minutesLeft
       : isFinite((cornerFrequencyHome + cornerFrequencyAway) * minutesLeft)
         ? (cornerFrequencyHome + cornerFrequencyAway) * minutesLeft
         : HISTORICAL_AVG.cornersPerMinute * minutesLeft)
-  );
+  ));
 
-  // 🛡️ Projection FAUTES: Hybride avec fallback
-  const foulRate = (liveData.homeFouls + liveData.awayFouls) / minutesSafe;
-  const projectedFouls = Math.round(
-    (liveData.homeFouls + liveData.awayFouls) +
+  // 🛡️ Projection FAUTES: Hybride avec fallback + PROTECTION MINIMUM
+  const currentFouls = liveData.homeFouls + liveData.awayFouls;
+  const foulRate = currentFouls / minutesSafe;
+  const projectedFouls = Math.max(currentFouls, Math.round(
+    currentFouls +
     (minute < 15 && foulRate < 0.1
       ? HISTORICAL_AVG.foulsPerMinute * minutesLeft
       : isFinite(foulRate * minutesLeft)
         ? foulRate * minutesLeft
         : HISTORICAL_AVG.foulsPerMinute * minutesLeft)
-  );
+  ));
 
-  // 🛡️ Projection CARTONS: Hybride avec fallback
-  const cardRate = (liveData.homeYellowCards + liveData.awayYellowCards) / minutesSafe;
-  const projectedCards = Math.round(
-    (liveData.homeYellowCards + liveData.awayYellowCards) +
+  // 🛡️ Projection CARTONS: Hybride avec fallback + PROTECTION MINIMUM
+  const currentCards = liveData.homeYellowCards + liveData.awayYellowCards;
+  const cardRate = currentCards / minutesSafe;
+  const projectedCards = Math.max(currentCards, Math.round(
+    currentCards +
     (minute < 15 && cardRate < 0.02
       ? HISTORICAL_AVG.cardsPerMinute * minutesLeft
       : isFinite(cardRate * minutesLeft)
         ? cardRate * minutesLeft
         : HISTORICAL_AVG.cardsPerMinute * minutesLeft)
-  );
+  ));
 
-  // 🛡️ Projection TIRS: Hybride avec fallback
-  const shotRate = (liveData.homeTotalShots + liveData.awayTotalShots) / minutesSafe;
-  const projectedShots = Math.round(
-    (liveData.homeTotalShots + liveData.awayTotalShots) +
+  // 🛡️ Projection TIRS: Hybride avec fallback + PROTECTION MINIMUM
+  const currentShots = liveData.homeTotalShots + liveData.awayTotalShots;
+  const shotRate = currentShots / minutesSafe;
+  const projectedShots = Math.max(currentShots, Math.round(
+    currentShots +
     (minute < 15 && shotRate < 0.1
       ? HISTORICAL_AVG.shotsPerMinute * minutesLeft
       : isFinite((shotFrequencyHome + shotFrequencyAway) * minutesLeft)
         ? (shotFrequencyHome + shotFrequencyAway) * minutesLeft
         : HISTORICAL_AVG.shotsPerMinute * minutesLeft)
-  );
+  ));
 
-  const projectedBigChances = Math.round(
-    (liveData.homeBigChances + liveData.awayBigChances) +
+  // 🛡️ PROTECTION #4: BigChances ne peuvent JAMAIS diminuer (Math.max)
+  const currentBigChances = liveData.homeBigChances + liveData.awayBigChances;
+  const projectedBigChances = Math.max(currentBigChances, Math.round(
+    currentBigChances +
     (isFinite((dangerCreationRateHome + dangerCreationRateAway) * minutesLeft)
       ? (dangerCreationRateHome + dangerCreationRateAway) * minutesLeft
       : 0)
-  );
+  ));
 
   // Likelihood calculées
   const bttsLikelihood = Math.min(100,
