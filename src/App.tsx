@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import PreMatch from "./pages/PreMatch";
 import Live from "./pages/Live";
-import Tennis from "./pages/Tennis";
+import TennisAuto from "./pages/TennisAuto";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,7 +21,7 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/pre-match" element={<PreMatch />} />
           <Route path="/live" element={<Live />} />
-          <Route path="/tennis" element={<Tennis />} />
+          <Route path="/tennis" element={<TennisAuto />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
