@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, Radio } from 'lucide-react';
+import { Activity, Radio, Trophy } from 'lucide-react';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ export default function Home() {
           <p className="text-lg text-slate-400">Précision : 78-98% selon les marchés</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-3 gap-6">
           {/* Pari Pré-Match */}
           <Card
             className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all cursor-pointer"
@@ -72,6 +72,36 @@ export default function Home() {
                 onClick={() => navigate('/live')}
               >
                 Accéder aux Paris Live
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Tennis */}
+          <Card
+            className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all cursor-pointer"
+            onClick={() => navigate('/tennis')}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <Trophy className="h-8 w-8 text-yellow-500" />
+                <CardTitle className="text-2xl text-white">Tennis</CardTitle>
+              </div>
+              <CardDescription className="text-slate-300">
+                Prédictions pour matchs de tennis ATP/WTA
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-slate-300 mb-6">
+                <li>• Vainqueur et score prédit</li>
+                <li>• Total jeux Over/Under</li>
+                <li>• Total Aces prédits</li>
+                <li>• Break de service</li>
+              </ul>
+              <Button
+                className="w-full bg-yellow-600 hover:bg-yellow-700"
+                onClick={() => navigate('/tennis')}
+              >
+                Accéder à l'Analyse Tennis
               </Button>
             </CardContent>
           </Card>
