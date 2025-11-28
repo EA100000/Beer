@@ -46,6 +46,7 @@ export interface ParsedTennisData {
 
 /**
  * Parse les données tennis collées depuis SofaScore ou autre source
+ * Format: chaque stat sur une ligne, valeurs sur lignes séparées
  */
 export function parseTennisData(rawText: string): ParsedTennisData | null {
   try {
@@ -56,209 +57,130 @@ export function parseTennisData(rawText: string): ParsedTennisData | null {
       player2: {}
     };
 
-    // Helper pour extraire 2 valeurs d'une ligne
-    const extractTwoValues = (line: string): [string, string] | null => {
-      const parts = line.split(/\s+/);
-      if (parts.length >= 2) {
-        return [parts[0], parts[1]];
-      }
-      return null;
-    };
-
-    // Helper pour extraire un nombre avec %
-    const extractPercentage = (text: string): number | undefined => {
-      const match = text.match(/(\d+\.?\d*)%/);
-      return match ? parseFloat(match[1]) : undefined;
-    };
-
-    // Helper pour extraire fraction et pourcentage
-    const extractFractionAndPercentage = (text: string): { count: number; total: number; percentage: number } | null => {
-      // Format: "207/359 (57.7%)" ou "20/47 (43%)"
-      const match = text.match(/(\d+)\/(\d+)\s*\((\d+\.?\d*)%\)/);
-      if (match) {
-        return {
-          count: parseInt(match[1]),
-          total: parseInt(match[2]),
-          percentage: parseFloat(match[3])
-        };
-      }
-      return null;
-    };
-
-    let currentSection = '';
-
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const nextLine = i + 1 < lines.length ? lines[i + 1] : '';
+      const nextNextLine = i + 2 < lines.length ? lines[i + 2] : '';
 
-      // Détection des sections
-      if (line.toLowerCase().includes('général') || line.toLowerCase().includes('general')) {
-        currentSection = 'general';
-        continue;
-      }
-      if (line.toLowerCase().includes('performance')) {
-        currentSection = 'performance';
-        continue;
-      }
-      if (line.toLowerCase().includes('service')) {
-        currentSection = 'service';
-        continue;
-      }
-      if (line.toLowerCase().includes('pression') || line.toLowerCase().includes('métriques')) {
-        currentSection = 'pressure';
-        continue;
+      // Âge - format: "28 ans" puis "33 ans" sur lignes séparées
+      if (line.toLowerCase().includes('âge') || line.toLowerCase() === 'age') {
+        const age1Match = nextLine.match(/(\d+)/);
+        const age2Match = nextNextLine.match(/(\d+)/);
+        if (age1Match) result.player1.age = parseInt(age1Match[1]);
+        if (age2Match) result.player2.age = parseInt(age2Match[1]);
       }
 
-      // Extraction selon la section
-      if (currentSection === 'general') {
-        if (line.toLowerCase().includes('âge') || line.toLowerCase().includes('age')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            result.player1.age = parseInt(values[0]);
-            result.player2.age = parseInt(values[1]);
-          }
+      // Matchs gagnés - format: "20/47 (43%)" puis "16/37 (43%)"
+      if (line.toLowerCase().includes('matchs gagnés') || line.toLowerCase().includes('matches won')) {
+        const match1 = nextLine.match(/(\d+)\/(\d+)\s*\((\d+)%\)/);
+        const match2 = nextNextLine.match(/(\d+)\/(\d+)\s*\((\d+)%\)/);
+        if (match1) {
+          result.player1.matches_won = `${match1[1]}/${match1[2]}`;
+          result.player1.win_percentage = parseInt(match1[3]);
         }
-        if (line.toLowerCase().includes('taille') || line.toLowerCase().includes('height')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            result.player1.height = parseFloat(values[0]);
-            result.player2.height = parseFloat(values[1]);
-          }
+        if (match2) {
+          result.player2.matches_won = `${match2[1]}/${match2[2]}`;
+          result.player2.win_percentage = parseInt(match2[3]);
         }
       }
 
-      if (currentSection === 'performance') {
-        if (line.toLowerCase().includes('matchs gagnés') || line.toLowerCase().includes('matches won')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            result.player1.matches_won = values[0];
-            result.player2.matches_won = values[1];
+      // 1er service - format: "65%" puis "56.5%"
+      if ((line === '1er service' || line.toLowerCase().includes('1st serve')) &&
+          !line.toLowerCase().includes('points')) {
+        const pct1 = nextLine.match(/(\d+\.?\d*)%/);
+        const pct2 = nextNextLine.match(/(\d+\.?\d*)%/);
+        if (pct1) result.player1.first_serve_percentage = parseFloat(pct1[1]);
+        if (pct2) result.player2.first_serve_percentage = parseFloat(pct2[1]);
+      }
 
-            // Extraire pourcentage
-            const p1Pct = extractPercentage(values[0]);
-            const p2Pct = extractPercentage(values[1]);
-            if (p1Pct) result.player1.win_percentage = p1Pct;
-            if (p2Pct) result.player2.win_percentage = p2Pct;
-          }
+      // Points gagnés sur 1er service
+      if (line.toLowerCase().includes('points gagnés sur 1er service') ||
+          line.toLowerCase().includes('1st serve points won')) {
+        const pct1 = nextLine.match(/(\d+\.?\d*)%/);
+        const pct2 = nextNextLine.match(/(\d+\.?\d*)%/);
+        if (pct1) result.player1.first_serve_points_won = parseFloat(pct1[1]);
+        if (pct2) result.player2.first_serve_points_won = parseFloat(pct2[1]);
+      }
+
+      // 2e service
+      if ((line === '2e service' || line.toLowerCase().includes('2nd serve')) &&
+          !line.toLowerCase().includes('points')) {
+        const pct1 = nextLine.match(/(\d+\.?\d*)%/);
+        const pct2 = nextNextLine.match(/(\d+\.?\d*)%/);
+        if (pct1) result.player1.second_serve_percentage = parseFloat(pct1[1]);
+        if (pct2) result.player2.second_serve_percentage = parseFloat(pct2[1]);
+      }
+
+      // Points gagnés sur 2e service
+      if (line.toLowerCase().includes('points gagnés sur 2e service') ||
+          line.toLowerCase().includes('2nd serve points won')) {
+        const pct1 = nextLine.match(/(\d+\.?\d*)%/);
+        const pct2 = nextNextLine.match(/(\d+\.?\d*)%/);
+        if (pct1) result.player1.second_serve_points_won = parseFloat(pct1[1]);
+        if (pct2) result.player2.second_serve_points_won = parseFloat(pct2[1]);
+      }
+
+      // Aces par match
+      if (line.toLowerCase().includes('aces par match') ||
+          line.toLowerCase().includes('aces per match')) {
+        const aces1 = parseFloat(nextLine);
+        const aces2 = parseFloat(nextNextLine);
+        if (!isNaN(aces1)) result.player1.aces_per_match = aces1;
+        if (!isNaN(aces2)) result.player2.aces_per_match = aces2;
+      }
+
+      // Doubles fautes par match
+      if (line.toLowerCase().includes('doubles fautes') ||
+          line.toLowerCase().includes('double faults')) {
+        const df1 = parseFloat(nextLine);
+        const df2 = parseFloat(nextNextLine);
+        if (!isNaN(df1)) result.player1.double_faults_per_match = df1;
+        if (!isNaN(df2)) result.player2.double_faults_per_match = df2;
+      }
+
+      // Balles de break sauvées
+      if (line.toLowerCase().includes('balles de break sauvées') ||
+          line.toLowerCase().includes('break points saved')) {
+        const bp1 = nextLine.match(/(\d+)\/(\d+)\s*\((\d+\.?\d*)%\)/);
+        const bp2 = nextNextLine.match(/(\d+)\/(\d+)\s*\((\d+\.?\d*)%\)/);
+        if (bp1) {
+          result.player1.break_points_saved = parseInt(bp1[1]);
+          result.player1.break_points_saved_percentage = parseFloat(bp1[3]);
         }
-        if (line.toLowerCase().includes('tournois remportés') || line.toLowerCase().includes('tournaments won')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            result.player1.tournaments_won = values[0];
-            result.player2.tournaments_won = values[1];
-          }
+        if (bp2) {
+          result.player2.break_points_saved = parseInt(bp2[1]);
+          result.player2.break_points_saved_percentage = parseFloat(bp2[3]);
         }
       }
 
-      if (currentSection === 'service') {
-        if (line === '1er service' || line.toLowerCase().includes('1er service')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            const p1 = extractPercentage(values[0]);
-            const p2 = extractPercentage(values[1]);
-            if (p1) result.player1.first_serve_percentage = p1;
-            if (p2) result.player2.first_serve_percentage = p2;
-          }
+      // Balles de break converties
+      if (line.toLowerCase().includes('balles de break converties') ||
+          line.toLowerCase().includes('break points converted')) {
+        const bp1 = nextLine.match(/(\d+)\/(\d+)\s*\((\d+\.?\d*)%\)/);
+        const bp2 = nextNextLine.match(/(\d+)\/(\d+)\s*\((\d+\.?\d*)%\)/);
+        if (bp1) {
+          result.player1.break_points_converted = parseInt(bp1[1]);
+          result.player1.break_points_converted_percentage = parseFloat(bp1[3]);
         }
-        if (line.toLowerCase().includes('points gagnés sur 1er service') ||
-            line.toLowerCase().includes('points won on 1st serve')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            const p1 = extractPercentage(values[0]);
-            const p2 = extractPercentage(values[1]);
-            if (p1) result.player1.first_serve_points_won = p1;
-            if (p2) result.player2.first_serve_points_won = p2;
-          }
-        }
-        if (line === '2e service' || line.toLowerCase().includes('2e service')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            const p1 = extractPercentage(values[0]);
-            const p2 = extractPercentage(values[1]);
-            if (p1) result.player1.second_serve_percentage = p1;
-            if (p2) result.player2.second_serve_percentage = p2;
-          }
-        }
-        if (line.toLowerCase().includes('points gagnés sur 2e service') ||
-            line.toLowerCase().includes('points won on 2nd serve')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            const p1 = extractPercentage(values[0]);
-            const p2 = extractPercentage(values[1]);
-            if (p1) result.player1.second_serve_points_won = p1;
-            if (p2) result.player2.second_serve_points_won = p2;
-          }
-        }
-        if (line.toLowerCase().includes('aces par match') ||
-            line.toLowerCase().includes('aces per match')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            result.player1.aces_per_match = parseFloat(values[0]);
-            result.player2.aces_per_match = parseFloat(values[1]);
-          }
-        }
-        if (line.toLowerCase().includes('doubles fautes par match') ||
-            line.toLowerCase().includes('double faults per match')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            result.player1.double_faults_per_match = parseFloat(values[0]);
-            result.player2.double_faults_per_match = parseFloat(values[1]);
-          }
+        if (bp2) {
+          result.player2.break_points_converted = parseInt(bp2[1]);
+          result.player2.break_points_converted_percentage = parseFloat(bp2[3]);
         }
       }
 
-      if (currentSection === 'pressure') {
-        if (line.toLowerCase().includes('balles de break sauvées') ||
-            line.toLowerCase().includes('break points saved')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            const p1Data = extractFractionAndPercentage(values[0]);
-            const p2Data = extractFractionAndPercentage(values[1]);
-
-            if (p1Data) {
-              result.player1.break_points_saved = p1Data.count;
-              result.player1.break_points_saved_percentage = p1Data.percentage;
-            }
-            if (p2Data) {
-              result.player2.break_points_saved = p2Data.count;
-              result.player2.break_points_saved_percentage = p2Data.percentage;
-            }
-          }
+      // Jeux décisifs gagnés
+      if (line.toLowerCase().includes('jeux décisifs') ||
+          line.toLowerCase().includes('tie') ||
+          line.toLowerCase().includes('tiebreak')) {
+        const tb1 = nextLine.match(/(\d+)\/(\d+)\s*\((\d+\.?\d*)%\)/);
+        const tb2 = nextNextLine.match(/(\d+)\/(\d+)\s*\((\d+\.?\d*)%\)/);
+        if (tb1) {
+          result.player1.tiebreaks_won = parseInt(tb1[1]);
+          result.player1.tiebreaks_won_percentage = parseFloat(tb1[3]);
         }
-        if (line.toLowerCase().includes('balles de break converties') ||
-            line.toLowerCase().includes('break points converted')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            const p1Data = extractFractionAndPercentage(values[0]);
-            const p2Data = extractFractionAndPercentage(values[1]);
-
-            if (p1Data) {
-              result.player1.break_points_converted = p1Data.count;
-              result.player1.break_points_converted_percentage = p1Data.percentage;
-            }
-            if (p2Data) {
-              result.player2.break_points_converted = p2Data.count;
-              result.player2.break_points_converted_percentage = p2Data.percentage;
-            }
-          }
-        }
-        if (line.toLowerCase().includes('jeux décisifs gagnés') ||
-            line.toLowerCase().includes('tie breaks won') ||
-            line.toLowerCase().includes('tiebreaks won')) {
-          const values = extractTwoValues(nextLine);
-          if (values) {
-            const p1Data = extractFractionAndPercentage(values[0]);
-            const p2Data = extractFractionAndPercentage(values[1]);
-
-            if (p1Data) {
-              result.player1.tiebreaks_won = p1Data.count;
-              result.player1.tiebreaks_won_percentage = p1Data.percentage;
-            }
-            if (p2Data) {
-              result.player2.tiebreaks_won = p2Data.count;
-              result.player2.tiebreaks_won_percentage = p2Data.percentage;
-            }
-          }
+        if (tb2) {
+          result.player2.tiebreaks_won = parseInt(tb2[1]);
+          result.player2.tiebreaks_won_percentage = parseFloat(tb2[3]);
         }
       }
     }
