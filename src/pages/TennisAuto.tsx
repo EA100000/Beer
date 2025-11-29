@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy, TrendingUp, Target, AlertCircle, ClipboardPaste, Zap } from 'lucide-react';
+import { ArrowLeft, Trophy, TrendingUp, Target, AlertCircle, ClipboardPaste, Zap, Radio } from 'lucide-react';
 import { parseTennisData, generateTennisDataSummary, validateParsedData, ParsedTennisData } from '@/utils/tennisParser';
 import { useToast } from '@/hooks/use-toast';
 
@@ -207,6 +207,13 @@ export default function TennisAuto() {
               <p className="text-slate-400">Collez les statistiques et obtenez l'analyse instantanée</p>
             </div>
           </div>
+          <Button
+            onClick={() => navigate('/tennis-live')}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            <Radio className="mr-2 h-4 w-4" />
+            Tennis Live (6 matchs)
+          </Button>
         </div>
 
         {/* Zone de collage */}
