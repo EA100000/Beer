@@ -109,7 +109,7 @@ export interface EnrichedLiveMetrics {
     expectedGoalDifference: number; // xG home - xG away
   };
 
-  // PROJECTIONS AVANCÉES (10 métriques)
+  // PROJECTIONS AVANCÉES (11 métriques)
   projections: {
     projectedFinalScore: { home: number; away: number };
     projectedCorners: number;
@@ -117,6 +117,7 @@ export interface EnrichedLiveMetrics {
     projectedCards: number;
     projectedShots: number;
     projectedBigChances: number;
+    projectedThrowIns: number;
     bttsLikelihood: number; // 0-100%
     over25Likelihood: number;
     over15CornersLikelihood: number;
@@ -519,7 +520,9 @@ export function enrichLiveData(
     cardsPerMatch: 4.2,
     cardsPerMinute: 4.2 / 90,
     shotsPerMatch: 20.0,
-    shotsPerMinute: 20.0 / 90
+    shotsPerMinute: 20.0 / 90,
+    throwInsPerMatch: 45.0,  // Moyenne: 40-50 remises en jeu par match
+    throwInsPerMinute: 45.0 / 90
   };
 
   // 🛡️ Projection BUTS: Hybride (live OU historique si données insuffisantes)
@@ -603,6 +606,18 @@ export function enrichLiveData(
     (isFinite((dangerCreationRateHome + dangerCreationRateAway) * minutesLeft)
       ? (dangerCreationRateHome + dangerCreationRateAway) * minutesLeft
       : 0)
+  ));
+
+  // 🛡️ Projection THROW-INS: Hybride avec fallback + PROTECTION MINIMUM
+  const currentThrowIns = liveData.homeThrowIns + liveData.awayThrowIns;
+  const throwInRate = currentThrowIns / minutesSafe;
+  const projectedThrowIns = Math.max(currentThrowIns, Math.round(
+    currentThrowIns +
+    (minute < 15 && throwInRate < 0.3
+      ? HISTORICAL_AVG.throwInsPerMinute * minutesLeft
+      : isFinite(throwInRate * minutesLeft)
+        ? throwInRate * minutesLeft
+        : HISTORICAL_AVG.throwInsPerMinute * minutesLeft)
   ));
 
   // Likelihood calculées
@@ -750,6 +765,7 @@ export function enrichLiveData(
       projectedCards,
       projectedShots,
       projectedBigChances,
+      projectedThrowIns,
       bttsLikelihood,
       over25Likelihood,
       over15CornersLikelihood,

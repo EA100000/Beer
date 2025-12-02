@@ -51,6 +51,10 @@ export interface ParsedMatchData {
   homeFouls: number;
   awayFouls: number;
 
+  // Remises en jeu (throw-ins)
+  homeThrowIns: number;
+  awayThrowIns: number;
+
   // Passes
   homePasses: number;
   awayPasses: number;
@@ -262,6 +266,17 @@ export function parseIntelligentMatchData(rawText: string): ParsedMatchData {
   }
 
   // ============================================================================
+  // EXTRACTION REMISES EN JEU (THROW-INS)
+  // ============================================================================
+  const throwInsMatch = text.match(/(\d+)\s*(?:Remises en jeu|Throw.?ins?)\s*(\d+)/i);
+  if (throwInsMatch) {
+    data.homeThrowIns = parseInt(throwInsMatch[1]);
+    data.awayThrowIns = parseInt(throwInsMatch[2]);
+  } else {
+    missingFields.push('Remises en jeu');
+  }
+
+  // ============================================================================
   // EXTRACTION PASSES
   // ============================================================================
   const passesMatch = text.match(/(\d+)\s*Passes\s*(\d+)/i);
@@ -470,6 +485,8 @@ export function parseIntelligentMatchData(rawText: string): ParsedMatchData {
       awayCorners: obj.awayCorners ?? 0,
       homeFouls: obj.homeFouls ?? 0,
       awayFouls: obj.awayFouls ?? 0,
+      homeThrowIns: obj.homeThrowIns ?? 0,
+      awayThrowIns: obj.awayThrowIns ?? 0,
       homePasses: obj.homePasses ?? 0,
       awayPasses: obj.awayPasses ?? 0,
       homeAccuratePasses: obj.homeAccuratePasses ?? 0,

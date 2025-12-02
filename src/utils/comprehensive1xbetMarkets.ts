@@ -305,19 +305,22 @@ export function generateComprehensive1xbetMarkets(
   };
 
   // ============================================================================
-  // 7. TOUCHES (Estimation basée sur possession et passes)
+  // 7. TOUCHES (Données live + projection enrichLiveData)
   // ============================================================================
-  const throwInsTotal = Math.round(
-    (enrichedMetrics.base.homePasses + enrichedMetrics.base.awayPasses) * 0.08 + // 8% des passes → touches
-    cornersTotal * 1.5 // Corrélation corners-touches
-  );
-  const throwInsHome = Math.round(throwInsTotal * 0.5);
+  const throwInsTotal = enrichedMetrics.projections.projectedThrowIns;
+  const currentThrowInsHome = enrichedMetrics.base.homeThrowIns || 0;
+  const currentThrowInsAway = enrichedMetrics.base.awayThrowIns || 0;
+  const currentThrowInsTotal = currentThrowInsHome + currentThrowInsAway;
+
+  // Répartition home/away basée sur ratio actuel (si données disponibles)
+  const homeRatio = currentThrowInsTotal > 0 ? currentThrowInsHome / currentThrowInsTotal : 0.5;
+  const throwInsHome = Math.round(throwInsTotal * homeRatio);
   const throwInsAway = throwInsTotal - throwInsHome;
 
   const throwIns = {
-    total: generateOverUnderPredictions(throwInsTotal, [30.5, 35.5, 40.5, 45.5], 'Touches Total', 75, 0, minute),
-    home: generateOverUnderPredictions(throwInsHome, [15.5, 18.5, 21.5], 'Touches Domicile', 72, 0, minute),
-    away: generateOverUnderPredictions(throwInsAway, [15.5, 18.5, 21.5], 'Touches Extérieur', 72, 0, minute)
+    total: generateOverUnderPredictions(throwInsTotal, [30.5, 35.5, 40.5, 45.5], 'Touches Total', 80, currentThrowInsTotal, minute),
+    home: generateOverUnderPredictions(throwInsHome, [15.5, 18.5, 21.5], 'Touches Domicile', 75, currentThrowInsHome, minute),
+    away: generateOverUnderPredictions(throwInsAway, [15.5, 18.5, 21.5], 'Touches Extérieur', 75, currentThrowInsAway, minute)
   };
 
   // ============================================================================

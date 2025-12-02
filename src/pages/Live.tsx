@@ -149,6 +149,9 @@ interface LiveMatchData {
   awayChancesCreated: number;
   homeLongPassAccuracy: number;
   awayLongPassAccuracy: number;
+  // REMISES EN JEU (THROW-INS)
+  homeThrowIns: number;
+  awayThrowIns: number;
 }
 
 interface ScorePrediction {
@@ -311,6 +314,9 @@ const defaultLiveData: LiveMatchData = {
   awayChancesCreated: 0,
   homeLongPassAccuracy: 0,
   awayLongPassAccuracy: 0,
+  // REMISES EN JEU (THROW-INS)
+  homeThrowIns: 0,
+  awayThrowIns: 0,
 };
 
 export default function Live() {
@@ -481,6 +487,9 @@ export default function Live() {
       awayFouls: intelligentData.awayFouls,
       homeFoulsDrawn: intelligentData.awayFouls,
       awayFoulsDrawn: intelligentData.homeFouls,
+      // Remises en jeu (throw-ins)
+      homeThrowIns: intelligentData.homeThrowIns,
+      awayThrowIns: intelligentData.awayThrowIns,
       // Cartons
       homeYellowCards: intelligentData.homeYellowCards,
       awayYellowCards: intelligentData.awayYellowCards,
