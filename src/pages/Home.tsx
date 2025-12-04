@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, Radio, Trophy, Sparkles } from 'lucide-react';
+import { Activity, Radio, Trophy, Sparkles, Calendar } from 'lucide-react';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -15,6 +15,45 @@ export default function Home() {
           <p className="text-lg text-slate-400">Précision : 78-98% selon les marchés</p>
         </div>
 
+        {/* Rangée 1: Prédictions Quotidiennes - Featured */}
+        <Card
+          className="bg-gradient-to-r from-blue-900/50 to-cyan-900/50 border-2 border-blue-500 hover:border-blue-400 transition-all cursor-pointer shadow-lg"
+          onClick={() => navigate('/daily')}
+        >
+          <CardHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <Calendar className="h-10 w-10 text-blue-400" />
+              <div>
+                <CardTitle className="text-3xl text-white">Prédictions Quotidiennes</CardTitle>
+                <CardDescription className="text-blue-200 text-base">
+                  🔥 Analysez tous vos matchs du jour en une seule fois
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
+              <ul className="space-y-2 text-slate-200">
+                <li>• Collez plusieurs matchs à la fois</li>
+                <li>• Format simple: Équipe vs Équipe | Elo | Elo</li>
+                <li>• 5 marchés prioritaires analysés</li>
+              </ul>
+              <ul className="space-y-2 text-slate-200">
+                <li>• ⚽ Buts (Over/Under 0.5 à 4.5)</li>
+                <li>• 🚩 Corners, 🟨 Fautes, 🔄 Touches</li>
+                <li>• 🎯 Double Chance (1X, 2X, 12)</li>
+              </ul>
+            </div>
+            <Button
+              className="w-full bg-blue-600 hover:bg-blue-700 mt-4 text-lg h-12"
+              onClick={() => navigate('/daily')}
+            >
+              Analyser mes Matchs du Jour
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Rangée 2: Autres analyses */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Pari Pré-Match */}
           <Card
@@ -24,24 +63,23 @@ export default function Home() {
             <CardHeader>
               <div className="flex items-center gap-3 mb-2">
                 <Activity className="h-8 w-8 text-green-500" />
-                <CardTitle className="text-2xl text-white">Pari Pré-Match</CardTitle>
+                <CardTitle className="text-xl text-white">Pari Pré-Match</CardTitle>
               </div>
-              <CardDescription className="text-slate-300">
-                Analyse avant le match avec données complètes
+              <CardDescription className="text-slate-300 text-sm">
+                Analyse avant le match
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-slate-300 mb-6">
-                <li>• Copier-coller depuis SofaScore</li>
-                <li>• Prédictions Over/Under (98% confiance)</li>
+              <ul className="space-y-1 text-slate-300 text-sm mb-4">
+                <li>• Copier-coller SofaScore</li>
+                <li>• Over/Under 98% confiance</li>
                 <li>• Corners, Fautes, Cartons</li>
-                <li>• Top 10 des meilleures prédictions</li>
               </ul>
               <Button
                 className="w-full bg-green-600 hover:bg-green-700"
                 onClick={() => navigate('/pre-match')}
               >
-                Accéder aux Paris Pré-Match
+                Accéder
               </Button>
             </CardContent>
           </Card>
@@ -54,24 +92,23 @@ export default function Home() {
             <CardHeader>
               <div className="flex items-center gap-3 mb-2">
                 <Radio className="h-8 w-8 text-red-500" />
-                <CardTitle className="text-2xl text-white">Pari Live</CardTitle>
+                <CardTitle className="text-xl text-white">Pari Live</CardTitle>
               </div>
-              <CardDescription className="text-slate-300">
-                Suivi de 4 matchs en direct simultanément
+              <CardDescription className="text-slate-300 text-sm">
+                4 matchs en direct
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-slate-300 mb-6">
-                <li>• 4 matchs en temps réel</li>
-                <li>• Mise à jour manuelle des stats</li>
+              <ul className="space-y-1 text-slate-300 text-sm mb-4">
+                <li>• Temps réel</li>
                 <li>• Prédictions adaptatives</li>
-                <li>• Alertes sur opportunités</li>
+                <li>• Alertes opportunités</li>
               </ul>
               <Button
                 className="w-full bg-red-600 hover:bg-red-700"
                 onClick={() => navigate('/live')}
               >
-                Accéder aux Paris Live
+                Accéder
               </Button>
             </CardContent>
           </Card>
@@ -84,24 +121,23 @@ export default function Home() {
             <CardHeader>
               <div className="flex items-center gap-3 mb-2">
                 <Trophy className="h-8 w-8 text-yellow-500" />
-                <CardTitle className="text-2xl text-white">Tennis</CardTitle>
+                <CardTitle className="text-xl text-white">Tennis</CardTitle>
               </div>
-              <CardDescription className="text-slate-300">
-                Prédictions pour matchs de tennis ATP/WTA
+              <CardDescription className="text-slate-300 text-sm">
+                Matchs ATP/WTA
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-slate-300 mb-6">
-                <li>• Vainqueur et score prédit</li>
+              <ul className="space-y-1 text-slate-300 text-sm mb-4">
+                <li>• Vainqueur prédit</li>
                 <li>• Total jeux Over/Under</li>
-                <li>• Total Aces prédits</li>
-                <li>• Break de service</li>
+                <li>• Aces et Breaks</li>
               </ul>
               <Button
                 className="w-full bg-yellow-600 hover:bg-yellow-700"
                 onClick={() => navigate('/tennis')}
               >
-                Accéder à l'Analyse Tennis
+                Accéder
               </Button>
             </CardContent>
           </Card>
@@ -114,24 +150,23 @@ export default function Home() {
             <CardHeader>
               <div className="flex items-center gap-3 mb-2">
                 <Sparkles className="h-8 w-8 text-purple-500" />
-                <CardTitle className="text-2xl text-white">Loto</CardTitle>
+                <CardTitle className="text-xl text-white">Loto</CardTitle>
               </div>
-              <CardDescription className="text-slate-300">
-                Générateur de numéros pour loteries
+              <CardDescription className="text-slate-300 text-sm">
+                Générateur loteries
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-slate-300 mb-6">
+              <ul className="space-y-1 text-slate-300 text-sm mb-4">
                 <li>• Loto France, EuroMillions</li>
                 <li>• Powerball, Mega Millions</li>
-                <li>• 4 méthodes de génération</li>
-                <li>• Jusqu'à 10 grilles</li>
+                <li>• 4 méthodes génération</li>
               </ul>
               <Button
                 className="w-full bg-purple-600 hover:bg-purple-700"
                 onClick={() => navigate('/loto')}
               >
-                Générer des Numéros
+                Accéder
               </Button>
             </CardContent>
           </Card>

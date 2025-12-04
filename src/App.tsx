@@ -9,6 +9,7 @@ import Live from "./pages/Live";
 import TennisAuto from "./pages/TennisAuto";
 import TennisLive from "./pages/TennisLive";
 import Loto from "./pages/Loto";
+import DailyPredictions from "./pages/DailyPredictions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/pre-match" element={<PreMatch />} />
           <Route path="/live" element={<Live />} />
+          <Route path="/daily" element={<DailyPredictions />} />
           <Route path="/tennis" element={<TennisAuto />} />
           <Route path="/tennis-live" element={<TennisLive />} />
           <Route path="/loto" element={<Loto />} />
