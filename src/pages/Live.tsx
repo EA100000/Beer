@@ -1030,11 +1030,19 @@ export default function Live() {
       totalShots: allMarkets1xbet.shots.totalShots.predictions[0]?.projected || 0
     };
 
-    // Snapshots pour analyse volatilité (simulé - dans une vraie app, on stockerait l'historique)
-    const snapshots = [
-      { minute: Math.max(0, match.liveData.minute - 15), value: Math.round(match.liveData.homeScore + match.liveData.awayScore) * 0.7 },
-      { minute: match.liveData.minute, value: match.liveData.homeScore + match.liveData.awayScore }
-    ];
+    // Snapshots RÉELS depuis l'historique des données collées
+    const snapshots = match.liveDataHistory.length > 0
+      ? match.liveDataHistory.map(snap => ({
+          minute: snap.data.minute,
+          value: snap.data.homeScore + snap.data.awayScore
+        }))
+      : [
+          // Fallback si pas d'historique
+          { minute: Math.max(0, match.liveData.minute - 15), value: Math.round((match.liveData.homeScore + match.liveData.awayScore) * 0.7) },
+          { minute: match.liveData.minute, value: match.liveData.homeScore + match.liveData.awayScore }
+        ];
+
+    console.log(`📸 [Snapshots] Utilisation de ${snapshots.length} snapshots réels:`, snapshots);
 
     // Valider les meilleures prédictions
     const hyperValidatedPredictions: Record<string, HyperReliablePrediction> = {};

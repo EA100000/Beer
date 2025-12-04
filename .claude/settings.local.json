@@ -12,7 +12,8 @@
       "Bash(git commit:*)",
       "Bash(node test-extraction.js:*)",
       "Bash(node test-real-parser.js:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
