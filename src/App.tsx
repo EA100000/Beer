@@ -8,6 +8,7 @@ import PreMatch from "./pages/PreMatch";
 import Live from "./pages/Live";
 import TennisAuto from "./pages/TennisAuto";
 import TennisLive from "./pages/TennisLive";
+import Loto from "./pages/Loto";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/live" element={<Live />} />
           <Route path="/tennis" element={<TennisAuto />} />
           <Route path="/tennis-live" element={<TennisLive />} />
+          <Route path="/loto" element={<Loto />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

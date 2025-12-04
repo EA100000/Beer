@@ -1,0 +1,455 @@
+{
+  "date": "2025-12-04T10:16:34.381Z",
+  "totalMatches": 49999,
+  "completeMatches": 22879,
+  "markets": {
+    "goals": {
+      "Over 0.5": {
+        "predictions": 22879,
+        "correct": 21211,
+        "accuracy": "92.7"
+      },
+      "Under 0.5": {
+        "predictions": 0,
+        "correct": 0,
+        "accuracy": 0
+      },
+      "Over 1.5": {
+        "predictions": 22879,
+        "correct": 17152,
+        "accuracy": "75.0"
+      },
+      "Under 1.5": {
+        "predictions": 0,
+        "correct": 0,
+        "accuracy": 0
+      },
+      "Over 2.5": {
+        "predictions": 20266,
+        "correct": 10506,
+        "accuracy": "51.8"
+      },
+      "Under 2.5": {
+        "predictions": 2613,
+        "correct": 1482,
+        "accuracy": "56.7"
+      },
+      "Over 3.5": {
+        "predictions": 1542,
+        "correct": 598,
+        "accuracy": "38.8"
+      },
+      "Under 3.5": {
+        "predictions": 21337,
+        "correct": 15290,
+        "accuracy": "71.7"
+      },
+      "Over 4.5": {
+        "predictions": 0,
+        "correct": 0,
+        "accuracy": 0
+      },
+      "Under 4.5": {
+        "predictions": 22879,
+        "correct": 19641,
+        "accuracy": "85.8"
+      }
+    },
+    "corners": {
+      "Over 8.5": {
+        "predictions": 22879,
+        "correct": 14311,
+        "accuracy": "62.6"
+      },
+      "Under 8.5": {
+        "predictions": 0,
+        "correct": 0,
+        "accuracy": 0
+      },
+      "Over 9.5": {
+        "predictions": 12451,
+        "correct": 6262,
+        "accuracy": "50.3"
+      },
+      "Under 9.5": {
+        "predictions": 10428,
+        "correct": 5110,
+        "accuracy": "49.0"
+      },
+      "Over 10.5": {
+        "predictions": 3782,
+        "correct": 1507,
+        "accuracy": "39.8"
+      },
+      "Under 10.5": {
+        "predictions": 19097,
+        "correct": 11682,
+        "accuracy": "61.2"
+      },
+      "Over 11.5": {
+        "predictions": 1102,
+        "correct": 337,
+        "accuracy": "30.6"
+      },
+      "Under 11.5": {
+        "predictions": 21777,
+        "correct": 15567,
+        "accuracy": "71.5"
+      },
+      "Over 12.5": {
+        "predictions": 0,
+        "correct": 0,
+        "accuracy": 0
+      },
+      "Under 12.5": {
+        "predictions": 22879,
+        "correct": 18254,
+        "accuracy": "79.8"
+      }
+    },
+    "yellowCards": {
+      "Over 2.5": {
+        "predictions": 22879,
+        "correct": 17494,
+        "accuracy": "76.5"
+      },
+      "Under 2.5": {
+        "predictions": 0,
+        "correct": 0,
+        "accuracy": 0
+      },
+      "Over 3.5": {
+        "predictions": 20099,
+        "correct": 12738,
+        "accuracy": "63.4"
+      },
+      "Under 3.5": {
+        "predictions": 2780,
+        "correct": 1938,
+        "accuracy": "69.7"
+      },
+      "Over 4.5": {
+        "predictions": 5738,
+        "correct": 3579,
+        "accuracy": "62.4"
+      },
+      "Under 4.5": {
+        "predictions": 17141,
+        "correct": 11273,
+        "accuracy": "65.8"
+      },
+      "Over 5.5": {
+        "predictions": 0,
+        "correct": 0,
+        "accuracy": 0
+      },
+      "Under 5.5": {
+        "predictions": 22879,
+        "correct": 17033,
+        "accuracy": "74.4"
+      }
+    },
+    "fouls": {
+      "Over 20.5": {
+        "predictions": 22879,
+        "correct": 16793,
+        "accuracy": "73.4"
+      },
+      "Under 20.5": {
+        "predictions": 0,
+        "correct": 0,
+        "accuracy": 0
+      },
+      "Over 22.5": {
+        "predictions": 19097,
+        "correct": 12149,
+        "accuracy": "63.6"
+      },
+      "Under 22.5": {
+        "predictions": 3782,
+        "correct": 1935,
+        "accuracy": "51.2"
+      },
+      "Over 24.5": {
+        "predictions": 10428,
+        "correct": 5466,
+        "accuracy": "52.4"
+      },
+      "Under 24.5": {
+        "predictions": 12451,
+        "correct": 6944,
+        "accuracy": "55.8"
+      },
+      "Over 26.5": {
+        "predictions": 0,
+        "correct": 0,
+        "accuracy": 0
+      },
+      "Under 26.5": {
+        "predictions": 22879,
+        "correct": 14634,
+        "accuracy": "64.0"
+      }
+    },
+    "shots": {
+      "Over 18.5": {
+        "predictions": 12451,
+        "correct": 10802,
+        "accuracy": "86.8"
+      },
+      "Under 18.5": {
+        "predictions": 10428,
+        "correct": 1642,
+        "accuracy": "15.7"
+      },
+      "Over 20.5": {
+        "predictions": 3782,
+        "correct": 3014,
+        "accuracy": "79.7"
+      },
+      "Under 20.5": {
+        "predictions": 19097,
+        "correct": 4851,
+        "accuracy": "25.4"
+      },
+      "Over 22.5": {
+        "predictions": 3782,
+        "correct": 2568,
+        "accuracy": "67.9"
+      },
+      "Under 22.5": {
+        "predictions": 19097,
+        "correct": 7292,
+        "accuracy": "38.2"
+      }
+    },
+    "btts": {
+      "YES": {
+        "predictions": 20415,
+        "correct": 10941,
+        "accuracy": "53.6"
+      },
+      "NO": {
+        "predictions": 2464,
+        "correct": 1324,
+        "accuracy": "53.7"
+      }
+    }
+  },
+  "profitable": [
+    {
+      "category": "goals",
+      "bet": "Over 0.5",
+      "accuracy": 92.7,
+      "predictions": 22879
+    },
+    {
+      "category": "shots",
+      "bet": "Over 18.5",
+      "accuracy": 86.8,
+      "predictions": 12451
+    },
+    {
+      "category": "goals",
+      "bet": "Under 4.5",
+      "accuracy": 85.8,
+      "predictions": 22879
+    },
+    {
+      "category": "corners",
+      "bet": "Under 12.5",
+      "accuracy": 79.8,
+      "predictions": 22879
+    },
+    {
+      "category": "shots",
+      "bet": "Over 20.5",
+      "accuracy": 79.7,
+      "predictions": 3782
+    },
+    {
+      "category": "yellowCards",
+      "bet": "Over 2.5",
+      "accuracy": 76.5,
+      "predictions": 22879
+    },
+    {
+      "category": "goals",
+      "bet": "Over 1.5",
+      "accuracy": 75,
+      "predictions": 22879
+    },
+    {
+      "category": "yellowCards",
+      "bet": "Under 5.5",
+      "accuracy": 74.4,
+      "predictions": 22879
+    },
+    {
+      "category": "fouls",
+      "bet": "Over 20.5",
+      "accuracy": 73.4,
+      "predictions": 22879
+    },
+    {
+      "category": "goals",
+      "bet": "Under 3.5",
+      "accuracy": 71.7,
+      "predictions": 21337
+    },
+    {
+      "category": "corners",
+      "bet": "Under 11.5",
+      "accuracy": 71.5,
+      "predictions": 21777
+    }
+  ],
+  "improvable": [
+    {
+      "category": "yellowCards",
+      "bet": "Under 3.5",
+      "accuracy": 69.7,
+      "predictions": 2780
+    },
+    {
+      "category": "shots",
+      "bet": "Over 22.5",
+      "accuracy": 67.9,
+      "predictions": 3782
+    },
+    {
+      "category": "yellowCards",
+      "bet": "Under 4.5",
+      "accuracy": 65.8,
+      "predictions": 17141
+    },
+    {
+      "category": "fouls",
+      "bet": "Under 26.5",
+      "accuracy": 64,
+      "predictions": 22879
+    },
+    {
+      "category": "fouls",
+      "bet": "Over 22.5",
+      "accuracy": 63.6,
+      "predictions": 19097
+    },
+    {
+      "category": "yellowCards",
+      "bet": "Over 3.5",
+      "accuracy": 63.4,
+      "predictions": 20099
+    },
+    {
+      "category": "corners",
+      "bet": "Over 8.5",
+      "accuracy": 62.6,
+      "predictions": 22879
+    },
+    {
+      "category": "yellowCards",
+      "bet": "Over 4.5",
+      "accuracy": 62.4,
+      "predictions": 5738
+    },
+    {
+      "category": "corners",
+      "bet": "Under 10.5",
+      "accuracy": 61.2,
+      "predictions": 19097
+    }
+  ],
+  "avoid": [
+    {
+      "category": "shots",
+      "bet": "Under 18.5",
+      "accuracy": 15.7,
+      "predictions": 10428
+    },
+    {
+      "category": "shots",
+      "bet": "Under 20.5",
+      "accuracy": 25.4,
+      "predictions": 19097
+    },
+    {
+      "category": "corners",
+      "bet": "Over 11.5",
+      "accuracy": 30.6,
+      "predictions": 1102
+    },
+    {
+      "category": "shots",
+      "bet": "Under 22.5",
+      "accuracy": 38.2,
+      "predictions": 19097
+    },
+    {
+      "category": "goals",
+      "bet": "Over 3.5",
+      "accuracy": 38.8,
+      "predictions": 1542
+    },
+    {
+      "category": "corners",
+      "bet": "Over 10.5",
+      "accuracy": 39.8,
+      "predictions": 3782
+    },
+    {
+      "category": "corners",
+      "bet": "Under 9.5",
+      "accuracy": 49,
+      "predictions": 10428
+    },
+    {
+      "category": "corners",
+      "bet": "Over 9.5",
+      "accuracy": 50.3,
+      "predictions": 12451
+    },
+    {
+      "category": "fouls",
+      "bet": "Under 22.5",
+      "accuracy": 51.2,
+      "predictions": 3782
+    },
+    {
+      "category": "goals",
+      "bet": "Over 2.5",
+      "accuracy": 51.8,
+      "predictions": 20266
+    },
+    {
+      "category": "fouls",
+      "bet": "Over 24.5",
+      "accuracy": 52.4,
+      "predictions": 10428
+    },
+    {
+      "category": "btts",
+      "bet": "YES",
+      "accuracy": 53.6,
+      "predictions": 20415
+    },
+    {
+      "category": "btts",
+      "bet": "NO",
+      "accuracy": 53.7,
+      "predictions": 2464
+    },
+    {
+      "category": "fouls",
+      "bet": "Under 24.5",
+      "accuracy": 55.8,
+      "predictions": 12451
+    },
+    {
+      "category": "goals",
+      "bet": "Under 2.5",
+      "accuracy": 56.7,
+      "predictions": 2613
+    }
+  ]
+}
