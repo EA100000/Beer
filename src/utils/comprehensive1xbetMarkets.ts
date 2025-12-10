@@ -628,12 +628,12 @@ function generateOverUnderPredictions(
 ): OverUnderMarket {
   const minutesRemaining = 90 - minute;
 
-  // 🚨 PROTECTION #0: Projected = 0 → REJET TOTAL
+  // Protection basique: Projected = 0 → REJET
   if (projected === 0 || !isFinite(projected)) {
     return { predictions: [], bestPick: null };
   }
 
-  // ✅ MARGE ADAPTÉE AU RISQUE DU MARCHÉ (au lieu de globale)
+  // ✅ MARGE MINIMALE RÉDUITE - MODE ACCESSIBLE
   let requiredMargin: number;
   const marketLower = marketName.toLowerCase();
 
@@ -644,26 +644,26 @@ function generateOverUnderPredictions(
                        marketLower.includes('foul') || marketLower.includes('throw');
 
   if (isRiskyMarket) {
-    // MARCHÉS RISQUÉS: Marge ultra-conservatrice
-    if (minute < 20) requiredMargin = 5.0;
-    else if (minute < 40) requiredMargin = 4.0;
-    else if (minute < 60) requiredMargin = 3.5;
-    else if (minute < 75) requiredMargin = 2.5;
-    else requiredMargin = 2.0;
+    // MARCHÉS RISQUÉS: Marge modérée (réduite de 50%)
+    if (minute < 20) requiredMargin = 2.5;
+    else if (minute < 40) requiredMargin = 2.0;
+    else if (minute < 60) requiredMargin = 1.5;
+    else if (minute < 75) requiredMargin = 1.2;
+    else requiredMargin = 1.0;
   } else if (isSafeMarket) {
-    // MARCHÉS SÛRS: Marge réduite (mais prudente)
-    if (minute < 20) requiredMargin = 3.0;
-    else if (minute < 40) requiredMargin = 2.5;
-    else if (minute < 60) requiredMargin = 2.0;
-    else if (minute < 75) requiredMargin = 1.5;
-    else requiredMargin = 1.2;
+    // MARCHÉS SÛRS: Marge très faible (accessible)
+    if (minute < 20) requiredMargin = 1.5;
+    else if (minute < 40) requiredMargin = 1.2;
+    else if (minute < 60) requiredMargin = 1.0;
+    else if (minute < 75) requiredMargin = 0.8;
+    else requiredMargin = 0.6;
   } else {
-    // MARCHÉS MODÉRÉS: Marge intermédiaire
-    if (minute < 20) requiredMargin = 4.0;
-    else if (minute < 40) requiredMargin = 3.5;
-    else if (minute < 60) requiredMargin = 2.5;
-    else if (minute < 75) requiredMargin = 2.0;
-    else requiredMargin = 1.5;
+    // MARCHÉS MODÉRÉS: Marge faible
+    if (minute < 20) requiredMargin = 2.0;
+    else if (minute < 40) requiredMargin = 1.5;
+    else if (minute < 60) requiredMargin = 1.2;
+    else if (minute < 75) requiredMargin = 1.0;
+    else requiredMargin = 0.8;
   }
 
   const predictions = thresholds
@@ -711,19 +711,17 @@ function generateOverUnderPredictions(
         if (ratePerMinute > maxRate * 1.5) return null; // Irréaliste
       }
 
-      // 🚨 VALIDATION #3: Minute MINIMALE 15 (PROTECTION 200M£)
-      // Justification: Avant minute 15, les données sont trop volatiles même avec marge 5.0
-      // Exemples: 0 corners en 10min → projection instable, taux/min peu fiables
-      if (minute < 15) return null; // Rejet TOTAL avant minute 15 (redondant mais sécuritaire)
+      // ✅ VALIDATION MINUTE: Accepte dès minute 10 (au lieu de 15)
+      if (minute < 10) return null; // Rejet avant minute 10 seulement
 
-      // 🚨 VALIDATION #4: Buts minute 80+ → marge MASSIVE requise
-      if (minute >= 80 && marketName.toLowerCase().includes('but') && distance < 3.0) {
-        return null; // Trop risqué en fin de match
+      // ✅ VALIDATION #4: Buts minute 80+ → marge augmentée (réduit de 3.0 à 1.5)
+      if (minute >= 80 && marketName.toLowerCase().includes('but') && distance < 1.5) {
+        return null; // Réduit de 3.0 à 1.5
       }
 
-      // 🚨 VALIDATION #5: Corners/Fautes minute 85+ → marge doublée
+      // ✅ VALIDATION #5: Corners/Fautes minute 85+ → marge légèrement augmentée
       if (minute >= 85) {
-        const extraMargin = requiredMargin * 0.5;
+        const extraMargin = requiredMargin * 0.3; // Réduit de 0.5 à 0.3
         if (distance < requiredMargin + extraMargin) return null;
       }
 
@@ -746,11 +744,11 @@ function generateOverUnderPredictions(
       // Plafond 92%
       confidence = Math.min(92, confidence);
 
-      // ✅ SEUIL MINIMUM ADAPTÉ AU RISQUE DU MARCHÉ
+      // ✅ SEUIL MINIMUM RÉDUIT - MODE ACCESSIBLE
       let minConfidence: number;
-      if (isRiskyMarket) minConfidence = 85;        // Buts, 1X2: Ultra-strict
-      else if (isSafeMarket) minConfidence = 70;    // Corners, Fautes: Standard
-      else minConfidence = 78;                      // Cartons, Tirs: Modéré
+      if (isRiskyMarket) minConfidence = 75;        // Buts, 1X2: Réduit de 85% à 75%
+      else if (isSafeMarket) minConfidence = 60;    // Corners, Fautes: Réduit de 70% à 60%
+      else minConfidence = 65;                      // Cartons, Tirs: Réduit de 78% à 65%
 
       if (confidence < minConfidence) return null;
 
