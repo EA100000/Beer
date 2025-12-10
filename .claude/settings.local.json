@@ -13,7 +13,8 @@
       "Bash(node test-extraction.js:*)",
       "Bash(node test-real-parser.js:*)",
       "Bash(node:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npm run build:dev:*)"
     ],
     "deny": [],
     "ask": []

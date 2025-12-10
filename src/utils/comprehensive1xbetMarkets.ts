@@ -670,60 +670,9 @@ function generateOverUnderPredictions(
     .map(threshold => {
       const distance = Math.abs(projected - threshold);
 
-      // VALIDATION #1: Distance minimum
-      if (distance < requiredMargin) {
-        return null; // REJETÉ: Marge insuffisante
-      }
-
       const prediction: 'OVER' | 'UNDER' = projected > threshold ? 'OVER' : 'UNDER';
 
-      // VALIDATION #2: Contexte score actuel
-      if (prediction === 'UNDER') {
-        // UNDER impossible si déjà au-dessus du seuil
-        if (currentValue >= threshold) return null;
-
-        // UNDER risqué si proche seuil et temps restant
-        const marginToThreshold = threshold - currentValue;
-        if (marginToThreshold < 1.5 && minute < 60) return null;
-
-        // Taux d'augmentation trop élevé?
-        const projectedIncrease = projected - currentValue;
-        const ratePerMinute = projectedIncrease / Math.max(1, minutesRemaining);
-        if (ratePerMinute > 0.08) return null; // 0.08/min = 7.2/match → dangereux pour UNDER
-      } else {
-        // OVER inutile si déjà largement au-dessus
-        if (currentValue > threshold + 2) return null;
-
-        // OVER risqué si projeté proche et temps court
-        if (projected < threshold + 1.0 && minutesRemaining < 20) return null;
-
-        // Taux réaliste?
-        const neededIncrease = threshold - currentValue + 0.5;
-        const ratePerMinute = neededIncrease / Math.max(1, minutesRemaining);
-
-        // Taux max réaliste selon marché
-        let maxRate = 0.2; // Défaut
-        if (marketName.toLowerCase().includes('but') || marketName.toLowerCase().includes('goal')) maxRate = 0.05;
-        else if (marketName.toLowerCase().includes('corner')) maxRate = 0.15;
-        else if (marketName.toLowerCase().includes('fau') || marketName.toLowerCase().includes('foul')) maxRate = 0.3;
-        else if (marketName.toLowerCase().includes('carton') || marketName.toLowerCase().includes('card')) maxRate = 0.08;
-
-        if (ratePerMinute > maxRate * 1.5) return null; // Irréaliste
-      }
-
-      // ✅ VALIDATION MINUTE: Accepte dès minute 10 (au lieu de 15)
-      if (minute < 10) return null; // Rejet avant minute 10 seulement
-
-      // ✅ VALIDATION #4: Buts minute 80+ → marge augmentée (réduit de 3.0 à 1.5)
-      if (minute >= 80 && marketName.toLowerCase().includes('but') && distance < 1.5) {
-        return null; // Réduit de 3.0 à 1.5
-      }
-
-      // ✅ VALIDATION #5: Corners/Fautes minute 85+ → marge légèrement augmentée
-      if (minute >= 85) {
-        const extraMargin = requiredMargin * 0.3; // Réduit de 0.5 à 0.3
-        if (distance < requiredMargin + extraMargin) return null;
-      }
+      // ✅ AUCUNE VALIDATION - TOUT EST ACCEPTÉ
 
       // ✅ CALCUL CONFIANCE ADAPTÉ AU MARCHÉ
       let confidence = isSafeMarket ? 50 : (isRiskyMarket ? 40 : 45);
@@ -741,16 +690,10 @@ function generateOverUnderPredictions(
       else if (prediction === 'UNDER' && currentValue < threshold - 2) confidence += 4;
       else if (prediction === 'OVER' && currentValue > threshold - 1.5) confidence += 4;
 
-      // Plafond 92%
-      confidence = Math.min(92, confidence);
+      // Plafond 95%
+      confidence = Math.min(95, confidence);
 
-      // ✅ SEUIL MINIMUM RÉDUIT - MODE ACCESSIBLE
-      let minConfidence: number;
-      if (isRiskyMarket) minConfidence = 75;        // Buts, 1X2: Réduit de 85% à 75%
-      else if (isSafeMarket) minConfidence = 60;    // Corners, Fautes: Réduit de 70% à 60%
-      else minConfidence = 65;                      // Cartons, Tirs: Réduit de 78% à 65%
-
-      if (confidence < minConfidence) return null;
+      // ✅ AUCUNE VALIDATION DE CONFIANCE - TOUT EST ACCEPTÉ
 
       return {
         threshold,
