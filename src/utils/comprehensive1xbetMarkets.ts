@@ -672,10 +672,17 @@ function generateOverUnderPredictions(
 
       const prediction: 'OVER' | 'UNDER' = projected > threshold ? 'OVER' : 'UNDER';
 
-      // ✅ AUCUNE VALIDATION - TOUT EST ACCEPTÉ
+      // ✅ VALIDATION INTELLIGENTE: Garder les prédictions SÛRES
+      // Marge minimum selon marché
+      if (isSafeMarket && distance < 0.8) return null;  // Corners, Fautes: 0.8+
+      if (!isSafeMarket && !isRiskyMarket && distance < 1.0) return null;  // Cartons, Tirs: 1.0+
+      if (isRiskyMarket && distance < 1.5) return null;  // Buts: 1.5+
+
+      // Minute minimum: 15 pour fiabilité
+      if (minute < 15) return null;
 
       // ✅ CALCUL CONFIANCE ADAPTÉ AU MARCHÉ
-      let confidence = isSafeMarket ? 50 : (isRiskyMarket ? 40 : 45);
+      let confidence = isSafeMarket ? 55 : (isRiskyMarket ? 45 : 50);
 
       // Bonus distance (adapté au risque)
       const distanceBonus = isSafeMarket ? 8 : (isRiskyMarket ? 6 : 7);
@@ -693,7 +700,9 @@ function generateOverUnderPredictions(
       // Plafond 95%
       confidence = Math.min(95, confidence);
 
-      // ✅ AUCUNE VALIDATION DE CONFIANCE - TOUT EST ACCEPTÉ
+      // ✅ FILTRER LES PRÉDICTIONS PEU FIABLES
+      const minConfidence = isSafeMarket ? 65 : (isRiskyMarket ? 75 : 70);
+      if (confidence < minConfidence) return null;
 
       return {
         threshold,
