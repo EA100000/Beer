@@ -609,12 +609,13 @@ function predictHalfTimeFullTime(
 }
 
 /**
- * ⚠️ SYSTÈME HYPER-CONSERVATEUR: Over/Under DOIVENT TOUJOURS GAGNER (98%+ réussite)
+ * ✅ SYSTÈME VALIDATION SÉLECTIVE: Adapté au risque du marché
  *
- * PROTECTION 200M£: ZÉRO RISQUE TOLÉRÉ
- * - Marge MINIMALE 2.0-5.0 selon minute
- * - Rejet TOTAL avant minute 15
- * - Confiance MINIMALE 75% (plafond 90%)
+ * NOUVELLE PHILOSOPHIE:
+ * - Marchés SÛRS (Corners, Fautes): Marge 1.5-3.0, Confiance 70%+
+ * - Marchés MODÉRÉS (Cartons, Tirs): Marge 2.0-4.0, Confiance 78%+
+ * - Marchés RISQUÉS (Buts, 1X2): Marge 2.5-5.0, Confiance 85%+
+ * - Rejet TOTAL avant minute 15 (toujours)
  * - AUCUNE prédiction si projected = 0
  */
 function generateOverUnderPredictions(
@@ -632,13 +633,38 @@ function generateOverUnderPredictions(
     return { predictions: [], bestPick: null };
   }
 
-  // 🚨 Marge requise HYPER-CONSERVATRICE (PROTECTION 200M£)
+  // ✅ MARGE ADAPTÉE AU RISQUE DU MARCHÉ (au lieu de globale)
   let requiredMargin: number;
-  if (minute < 20) requiredMargin = 5.0;      // Début: REJET QUASI-TOTAL
-  else if (minute < 40) requiredMargin = 4.0; // 1ère MT: TRÈS prudent
-  else if (minute < 60) requiredMargin = 3.5; // Mi-match: Prudent
-  else if (minute < 75) requiredMargin = 2.5; // Fin approche: Modéré
-  else requiredMargin = 2.0;                  // Dernières minutes: Minimum absolu
+  const marketLower = marketName.toLowerCase();
+
+  // Déterminer risque marché
+  const isRiskyMarket = marketLower.includes('but') || marketLower.includes('goal') ||
+                        marketLower.includes('1x2') || marketLower.includes('exact');
+  const isSafeMarket = marketLower.includes('corner') || marketLower.includes('fau') ||
+                       marketLower.includes('foul') || marketLower.includes('throw');
+
+  if (isRiskyMarket) {
+    // MARCHÉS RISQUÉS: Marge ultra-conservatrice
+    if (minute < 20) requiredMargin = 5.0;
+    else if (minute < 40) requiredMargin = 4.0;
+    else if (minute < 60) requiredMargin = 3.5;
+    else if (minute < 75) requiredMargin = 2.5;
+    else requiredMargin = 2.0;
+  } else if (isSafeMarket) {
+    // MARCHÉS SÛRS: Marge réduite (mais prudente)
+    if (minute < 20) requiredMargin = 3.0;
+    else if (minute < 40) requiredMargin = 2.5;
+    else if (minute < 60) requiredMargin = 2.0;
+    else if (minute < 75) requiredMargin = 1.5;
+    else requiredMargin = 1.2;
+  } else {
+    // MARCHÉS MODÉRÉS: Marge intermédiaire
+    if (minute < 20) requiredMargin = 4.0;
+    else if (minute < 40) requiredMargin = 3.5;
+    else if (minute < 60) requiredMargin = 2.5;
+    else if (minute < 75) requiredMargin = 2.0;
+    else requiredMargin = 1.5;
+  }
 
   const predictions = thresholds
     .map(threshold => {
@@ -701,26 +727,32 @@ function generateOverUnderPredictions(
         if (distance < requiredMargin + extraMargin) return null;
       }
 
-      // 🚨 CALCUL CONFIANCE HYPER-CONSERVATRICE (ZÉRO RISQUE)
-      let confidence = 45; // Base TRÈS conservatrice
+      // ✅ CALCUL CONFIANCE ADAPTÉ AU MARCHÉ
+      let confidence = isSafeMarket ? 50 : (isRiskyMarket ? 40 : 45);
 
-      // Bonus distance (max +25% au lieu de 30%)
-      confidence += Math.min(25, distance * 6);
+      // Bonus distance (adapté au risque)
+      const distanceBonus = isSafeMarket ? 8 : (isRiskyMarket ? 6 : 7);
+      confidence += Math.min(30, distance * distanceBonus);
 
-      // Bonus minute avancée (max +12% au lieu de 15%)
-      confidence += Math.min(12, (minute / 90) * 12);
+      // Bonus minute avancée
+      confidence += Math.min(15, (minute / 90) * 15);
 
-      // Bonus alignement score (max +8% au lieu de 10%)
+      // Bonus alignement score
       if (prediction === 'UNDER' && currentValue < threshold - 3) confidence += 8;
       else if (prediction === 'OVER' && currentValue > threshold - 0.5) confidence += 8;
       else if (prediction === 'UNDER' && currentValue < threshold - 2) confidence += 4;
       else if (prediction === 'OVER' && currentValue > threshold - 1.5) confidence += 4;
 
-      // 🚨 Plafond 90% (au lieu de 92% - PLUS RÉALISTE)
-      confidence = Math.min(90, confidence);
+      // Plafond 92%
+      confidence = Math.min(92, confidence);
 
-      // 🚨 Filtre FINAL: confiance < 75% → REJET (au lieu de 72%)
-      if (confidence < 75) return null;
+      // ✅ SEUIL MINIMUM ADAPTÉ AU RISQUE DU MARCHÉ
+      let minConfidence: number;
+      if (isRiskyMarket) minConfidence = 85;        // Buts, 1X2: Ultra-strict
+      else if (isSafeMarket) minConfidence = 70;    // Corners, Fautes: Standard
+      else minConfidence = 78;                      // Cartons, Tirs: Modéré
+
+      if (confidence < minConfidence) return null;
 
       return {
         threshold,
