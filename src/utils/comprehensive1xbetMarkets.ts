@@ -669,40 +669,13 @@ function generateOverUnderPredictions(
   const predictions = thresholds
     .map(threshold => {
       const distance = Math.abs(projected - threshold);
-
       const prediction: 'OVER' | 'UNDER' = projected > threshold ? 'OVER' : 'UNDER';
 
-      // ✅ VALIDATION INTELLIGENTE: Garder les prédictions SÛRES
-      // Marge minimum selon marché
-      if (isSafeMarket && distance < 0.8) return null;  // Corners, Fautes: 0.8+
-      if (!isSafeMarket && !isRiskyMarket && distance < 1.0) return null;  // Cartons, Tirs: 1.0+
-      if (isRiskyMarket && distance < 1.5) return null;  // Buts: 1.5+
+      // AUCUNE VALIDATION - TOUT PASSE
 
-      // Minute minimum: 15 pour fiabilité
-      if (minute < 15) return null;
-
-      // ✅ CALCUL CONFIANCE ADAPTÉ AU MARCHÉ
-      let confidence = isSafeMarket ? 55 : (isRiskyMarket ? 45 : 50);
-
-      // Bonus distance (adapté au risque)
-      const distanceBonus = isSafeMarket ? 8 : (isRiskyMarket ? 6 : 7);
-      confidence += Math.min(30, distance * distanceBonus);
-
-      // Bonus minute avancée
-      confidence += Math.min(15, (minute / 90) * 15);
-
-      // Bonus alignement score
-      if (prediction === 'UNDER' && currentValue < threshold - 3) confidence += 8;
-      else if (prediction === 'OVER' && currentValue > threshold - 0.5) confidence += 8;
-      else if (prediction === 'UNDER' && currentValue < threshold - 2) confidence += 4;
-      else if (prediction === 'OVER' && currentValue > threshold - 1.5) confidence += 4;
-
-      // Plafond 95%
+      // Calcul confiance
+      let confidence = 50 + (distance * 8) + ((minute / 90) * 20);
       confidence = Math.min(95, confidence);
-
-      // ✅ FILTRER LES PRÉDICTIONS PEU FIABLES
-      const minConfidence = isSafeMarket ? 65 : (isRiskyMarket ? 75 : 70);
-      if (confidence < minConfidence) return null;
 
       return {
         threshold,
