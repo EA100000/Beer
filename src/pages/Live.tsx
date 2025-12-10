@@ -1044,105 +1044,19 @@ export default function Live() {
 
     console.log(`📸 [Snapshots] Utilisation de ${snapshots.length} snapshots réels:`, snapshots);
 
-    // Valider les meilleures prédictions
+    // ✅ VALIDATION SÉLECTIVE: HyperReliability désactivée - Utilise validation adaptée au risque
     const hyperValidatedPredictions: Record<string, HyperReliablePrediction> = {};
 
-    // Buts
-    if (allMarkets1xbet.goals.totalGoals.bestPick) {
-      hyperValidatedPredictions.totalGoals = validateWithHyperReliability(
-        {
-          marketName: 'Total Buts',
-          projected: allMarkets1xbet.goals.totalGoals.predictions[0]?.projected || 0,
-          threshold: allMarkets1xbet.goals.totalGoals.bestPick.threshold,
-          currentValue: match.liveData.homeScore + match.liveData.awayScore,
-          minute: match.liveData.minute,
-          confidence: allMarkets1xbet.goals.totalGoals.bestPick.confidence,
-          prediction: allMarkets1xbet.goals.totalGoals.bestPick.prediction
-        },
-        allProjections,
-        snapshots
-      );
-
-      console.log(`   ⚽ Buts: ${hyperValidatedPredictions.totalGoals.isApproved ? '✅ APPROUVÉ' : '❌ REJETÉ'} (Score: ${hyperValidatedPredictions.totalGoals.reliabilityScore}/100)`);
-      if (!hyperValidatedPredictions.totalGoals.isApproved) {
-        console.log(`      Raisons: ${hyperValidatedPredictions.totalGoals.riskFactors.join(', ')}`);
-      }
-    }
-
-    // Corners
-    if (allMarkets1xbet.corners.total.bestPick) {
-      hyperValidatedPredictions.corners = validateWithHyperReliability(
-        {
-          marketName: 'Corners Total',
-          projected: allMarkets1xbet.corners.total.predictions[0]?.projected || 0,
-          threshold: allMarkets1xbet.corners.total.bestPick.threshold,
-          currentValue: match.liveData.homeCorners + match.liveData.awayCorners,
-          minute: match.liveData.minute,
-          confidence: allMarkets1xbet.corners.total.bestPick.confidence,
-          prediction: allMarkets1xbet.corners.total.bestPick.prediction
-        },
-        allProjections,
-        [
-          { minute: Math.max(0, match.liveData.minute - 15), value: Math.round((match.liveData.homeCorners + match.liveData.awayCorners) * 0.7) },
-          { minute: match.liveData.minute, value: match.liveData.homeCorners + match.liveData.awayCorners }
-        ]
-      );
-
-      console.log(`   🚩 Corners: ${hyperValidatedPredictions.corners.isApproved ? '✅ APPROUVÉ' : '❌ REJETÉ'} (Score: ${hyperValidatedPredictions.corners.reliabilityScore}/100)`);
-    }
-
-    // Cartons
-    if (allMarkets1xbet.cards.yellowTotal.bestPick) {
-      hyperValidatedPredictions.cards = validateWithHyperReliability(
-        {
-          marketName: 'Cartons Total',
-          projected: allMarkets1xbet.cards.yellowTotal.predictions[0]?.projected || 0,
-          threshold: allMarkets1xbet.cards.yellowTotal.bestPick.threshold,
-          currentValue: match.liveData.homeYellowCards + match.liveData.awayYellowCards,
-          minute: match.liveData.minute,
-          confidence: allMarkets1xbet.cards.yellowTotal.bestPick.confidence,
-          prediction: allMarkets1xbet.cards.yellowTotal.bestPick.prediction
-        },
-        allProjections,
-        [
-          { minute: Math.max(0, match.liveData.minute - 15), value: Math.round((match.liveData.homeYellowCards + match.liveData.awayYellowCards) * 0.7) },
-          { minute: match.liveData.minute, value: match.liveData.homeYellowCards + match.liveData.awayYellowCards }
-        ]
-      );
-
-      console.log(`   🟨 Cartons: ${hyperValidatedPredictions.cards.isApproved ? '✅ APPROUVÉ' : '❌ REJETÉ'} (Score: ${hyperValidatedPredictions.cards.reliabilityScore}/100)`);
-    }
-
-    // Tirs
-    if (allMarkets1xbet.shots.totalShots.bestPick) {
-      hyperValidatedPredictions.shots = validateWithHyperReliability(
-        {
-          marketName: 'Tirs Total',
-          projected: allMarkets1xbet.shots.totalShots.predictions[0]?.projected || 0,
-          threshold: allMarkets1xbet.shots.totalShots.bestPick.threshold,
-          currentValue: match.liveData.homeTotalShots + match.liveData.awayTotalShots,
-          minute: match.liveData.minute,
-          confidence: allMarkets1xbet.shots.totalShots.bestPick.confidence,
-          prediction: allMarkets1xbet.shots.totalShots.bestPick.prediction
-        },
-        allProjections,
-        [
-          { minute: Math.max(0, match.liveData.minute - 15), value: Math.round((match.liveData.homeTotalShots + match.liveData.awayTotalShots) * 0.7) },
-          { minute: match.liveData.minute, value: match.liveData.homeTotalShots + match.liveData.awayTotalShots }
-        ]
-      );
-
-      console.log(`   🎯 Tirs: ${hyperValidatedPredictions.shots.isApproved ? '✅ APPROUVÉ' : '❌ REJETÉ'} (Score: ${hyperValidatedPredictions.shots.reliabilityScore}/100)`);
-    }
-
-    console.log(`✅ [HYPER-RELIABILITY] ${Object.values(hyperValidatedPredictions).filter(p => p.isApproved).length}/${Object.keys(hyperValidatedPredictions).length} prédictions approuvées après validation multi-couches`);
+    console.log(`✅ [VALIDATION SÉLECTIVE] Système ultra-conservateur DÉSACTIVÉ - Validation adaptée au risque du marché`);
 
     // ============================================================================
-    // ANALYSE HYBRIDE: PRÉ-MATCH + LIVE + TENDANCES = PRÉCISION MAXIMALE
+    // ✅ VALIDATION SÉLECTIVE: Utilise UNIQUEMENT comprehensive1xbetMarkets
+    // L'ancien système hybride avec validatePrediction est DÉSACTIVÉ
     // ============================================================================
 
     // 1. Prédictions pré-match (basées sur moyennes historiques des équipes)
-    const predictions = generateAllOverUnderPredictions(match.homeTeam, match.awayTeam);
+    // ⚠️ DÉSACTIVÉ: Remplacé par allMarkets1xbet avec validation sélective
+    const predictions = null; // generateAllOverUnderPredictions(match.homeTeam, match.awayTeam);
 
     // 2. Prédiction du score final
     const scorePrediction = predictFinalScore(match);
@@ -1150,19 +1064,29 @@ export default function Live() {
     // 2b. Prédiction BTTS (Both Teams To Score)
     const bttsPrediction = predictBTTS(match);
 
-    // 3. Prédictions HYBRIDES: Combiner tendances pré-match + réalité live + tendances linéaires
+    // 3. ⚠️ ANCIEN SYSTÈME DÉSACTIVÉ: Validation ultra-stricte remplacée par validation sélective
+    // Utiliser UNIQUEMENT allMarkets1xbet qui contient déjà toutes les prédictions
     const livePredictions = {
-      corners: [] as OverUnderPrediction[],
-      fouls: [] as OverUnderPrediction[],
-      yellowCards: [] as OverUnderPrediction[],
-      offsides: [] as OverUnderPrediction[],
-      totalShots: [] as OverUnderPrediction[],
-      goals: [] as OverUnderPrediction[]
+      corners: [] as OverUnderPrediction[], // DÉSACTIVÉ - Voir allMarkets1xbet.corners
+      fouls: [] as OverUnderPrediction[],   // DÉSACTIVÉ - Voir allMarkets1xbet.fouls
+      yellowCards: [] as OverUnderPrediction[], // DÉSACTIVÉ - Voir allMarkets1xbet.cards
+      offsides: [] as OverUnderPrediction[], // DÉSACTIVÉ - Voir allMarkets1xbet.offsides
+      totalShots: [] as OverUnderPrediction[], // DÉSACTIVÉ - Voir allMarkets1xbet.shots
+      goals: [] as OverUnderPrediction[] // DÉSACTIVÉ - Voir allMarkets1xbet.goals
     };
 
     const minutesPlayed = match.liveData.minute;
     const minutesLeft = 90 - minutesPlayed;
     const progressRatio = minutesPlayed / 90; // % du match joué
+
+    /* ============================================================================
+    ⚠️ ANCIEN SYSTÈME DÉSACTIVÉ - VALIDATION ULTRA-STRICTE
+    Toutes les sections ci-dessous sont commentées car elles utilisent validatePrediction
+    qui applique le mode ultra-conservateur GLOBAL.
+
+    Utiliser UNIQUEMENT allMarkets1xbet qui contient déjà toutes les prédictions
+    avec la validation sélective adaptée au risque de chaque marché.
+    ============================================================================
 
     // ============================================================================
     // CORNERS ULTRA-AVANCÉ: Pré-match + Live + Tendances + 100+ Métriques Enrichies
@@ -1686,6 +1610,9 @@ export default function Live() {
         });
       }
     });
+
+    FIN DU COMMENTAIRE MULTI-LIGNES - ANCIEN SYSTÈME DÉSACTIVÉ
+    ============================================================================ */
 
     // ============================================================================
     // NOUVELLE ÉTAPE 4: APPLIQUER AJUSTEMENT CONFIANCE ANOMALIES
