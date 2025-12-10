@@ -287,10 +287,13 @@ export function generateComprehensive1xbetMarkets(
   const remainingShots = Math.max(0, shotsTotal - currentShotsTotal);
 
   // Précision moyenne des tirs (% cadrés)
-  // ⚠️ CORRECTION CRITIQUE: Division par 2 pour moyenne, puis /100 pour convertir % en décimal
+  // ⚠️ CORRECTION CRITIQUE: Protection NaN + Fallback réaliste (35% précision moyenne)
   const avgShotAccuracy = currentShotsTotal > 0
     ? (currentShotsOnTarget / currentShotsTotal)
-    : ((enrichedMetrics.efficiency.shotAccuracy.home + enrichedMetrics.efficiency.shotAccuracy.away) / 2 / 100);
+    : Math.min(0.5, Math.max(0.3,
+        ((enrichedMetrics.efficiency.shotAccuracy.home || 35) +
+         (enrichedMetrics.efficiency.shotAccuracy.away || 35)) / 2 / 100
+      )); // Fallback: 30-50% précision (réaliste)
 
   const shotsOnTargetTotal = currentShotsOnTarget + (remainingShots * avgShotAccuracy);
   const shotsOffTargetTotal = Math.max(0, shotsTotal - shotsOnTargetTotal);
@@ -683,7 +686,9 @@ function generateOverUnderPredictions(
       }
 
       // 🚨 VALIDATION #3: Minute MINIMALE 15 (PROTECTION 200M£)
-      if (minute < 15) return null; // Rejet TOTAL avant minute 15
+      // Justification: Avant minute 15, les données sont trop volatiles même avec marge 5.0
+      // Exemples: 0 corners en 10min → projection instable, taux/min peu fiables
+      if (minute < 15) return null; // Rejet TOTAL avant minute 15 (redondant mais sécuritaire)
 
       // 🚨 VALIDATION #4: Buts minute 80+ → marge MASSIVE requise
       if (minute >= 80 && marketName.toLowerCase().includes('but') && distance < 3.0) {

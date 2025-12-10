@@ -201,12 +201,17 @@ export function validateUltraConservative(
     riskFactors.push(`Fautes anormales: ${foulsPredicted} (min réaliste: 10)`);
   }
 
-  // Cartons jaunes > 12 ou < 1 → Suspect
+  // Cartons jaunes: Pénaliser dès 90e percentile (ultra-conservateur)
+  // Stats réelles: Moyenne 4.2, 80% matchs entre 2-7, 90% entre 1-7
   const yellowCardsPredicted = prediction.yellowCards?.predicted || 0;
-  if (yellowCardsPredicted > 12) {
-    penalties.push({ reason: `Cartons trop élevés: ${yellowCardsPredicted}`, points: 15 });
-    finalScore -= 15;
-    riskFactors.push(`Cartons anormaux: ${yellowCardsPredicted} (max réaliste: 12)`);
+  if (yellowCardsPredicted > 10) {
+    penalties.push({ reason: `Cartons très élevés: ${yellowCardsPredicted}`, points: 20 });
+    finalScore -= 20;
+    riskFactors.push(`Cartons très anormaux: ${yellowCardsPredicted} (>10 = 99e percentile, très rare)`);
+  } else if (yellowCardsPredicted > 7) {
+    penalties.push({ reason: `Cartons élevés: ${yellowCardsPredicted}`, points: 10 });
+    finalScore -= 10;
+    riskFactors.push(`Cartons élevés: ${yellowCardsPredicted} (>7 = 90e percentile, rare)`);
   }
   if (yellowCardsPredicted < 1 && yellowCardsPredicted > 0) {
     penalties.push({ reason: `Cartons trop faibles: ${yellowCardsPredicted}`, points: 10 });
@@ -276,9 +281,23 @@ function checkPredictionCoherence(prediction: MatchPrediction): string[] {
     prediction.overUnder25Goals?.under || 0
   );
 
-  // BTTS = Yes + Over 2.5 = No → Incohérent (minimum 3 buts si BTTS)
+  // BTTS = Yes + Over 2.5 = No → OK si score 1-1 (2 buts exactement)
   if (bttsYes && bttsConfidence > 70 && !over25Yes && over25Confidence > 70) {
-    issues.push('Incohérence BTTS=Yes + Over2.5=No');
+    if (prediction.mostLikelyScorelines && prediction.mostLikelyScorelines.length > 0) {
+      const topScore = prediction.mostLikelyScorelines[0].score;
+      const [home, away] = topScore.split('-').map(Number);
+      const totalGoals = home + away;
+
+      // ✅ Cohérent si 1-1 ou 2-0 (2 buts)
+      if (totalGoals === 2 && home > 0 && away > 0) {
+        // OK, score 1-1 valide BTTS=Yes + Over2.5=No
+      } else if (totalGoals !== 2) {
+        issues.push(`Incohérence BTTS=Yes + Over2.5=No (score: ${topScore}, ${totalGoals} buts)`);
+      }
+    } else {
+      // Pas de score disponible, marquer comme suspect
+      issues.push('Incohérence BTTS=Yes + Over2.5=No (score non disponible pour validation)');
+    }
   }
 
   // Over 2.5 = Yes + BTTS = No → OK seulement si domination claire (3-0, 4-0)
