@@ -429,8 +429,8 @@ function calculateMatchResult(
   const projectedAway = halfTimeFullTime.fullTime.awayScore;
   const diff = projectedHome - projectedAway;
 
-  // 🚨 PROTECTION: Pas de prédiction avant minute 30 (TROP INCERTAIN)
-  const isReliable = minute >= 30;
+  // AUCUNE PROTECTION - Affichage dès minute 1
+  const isReliable = true;
 
   // Calcul des probabilités (méthode Poisson simplifiée + momentum)
   const homeAdvantage = enrichedMetrics.context.homeAdvantage || 0;
@@ -628,9 +628,9 @@ function generateOverUnderPredictions(
 ): OverUnderMarket {
   const minutesRemaining = 90 - minute;
 
-  // Protection basique: Projected = 0 → REJET
-  if (projected === 0 || !isFinite(projected)) {
-    return { predictions: [], bestPick: null };
+  // AUCUNE PROTECTION - Même si projected = 0, on affiche quand même
+  if (!isFinite(projected)) {
+    projected = 0; // Convertir NaN/Infinity en 0
   }
 
   // ✅ MARGE MINIMALE RÉDUITE - MODE ACCESSIBLE
