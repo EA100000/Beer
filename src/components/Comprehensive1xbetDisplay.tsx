@@ -132,14 +132,22 @@ export default function Comprehensive1xbetDisplay({ markets, homeTeam, awayTeam 
             Score Exact Projeté: {markets.goals.exactScore.fullTime} (Confiance: {markets.goals.exactScore.confidence}%)
           </p>
         </div>
-        {markets.goals.totalGoals.bestPick && (
-          <PredictionRow
-            label="Total Buts (Meilleur Pick)"
-            prediction={markets.goals.totalGoals.bestPick.prediction}
-            threshold={markets.goals.totalGoals.bestPick.threshold}
-            projected={markets.goals.totalGoals.predictions[0]?.projected}
-            confidence={markets.goals.totalGoals.bestPick.confidence}
-          />
+        {/* AFFICHER TOUTES LES PRÉDICTIONS */}
+        {markets.goals.totalGoals.predictions.length > 0 ? (
+          markets.goals.totalGoals.predictions.map((pred, idx) => (
+            <PredictionRow
+              key={`goal-${idx}`}
+              label={`Total Buts ${idx + 1}/${markets.goals.totalGoals.predictions.length}`}
+              prediction={pred.prediction}
+              threshold={pred.threshold}
+              projected={pred.projected}
+              confidence={pred.confidence}
+            />
+          ))
+        ) : (
+          <div className="text-red-400 p-3 border border-red-600 rounded">
+            ❌ Aucune prédiction (vérifiez console)
+          </div>
         )}
         {markets.goals.homeGoals.bestPick && (
           <PredictionRow
@@ -163,14 +171,22 @@ export default function Comprehensive1xbetDisplay({ markets, homeTeam, awayTeam 
 
       {/* ========== CORNERS ========== */}
       <MarketSection title="🚩 CORNERS" color="text-cyan-400">
-        {markets.corners.total.bestPick && (
-          <PredictionRow
-            label="Total Corners"
-            prediction={markets.corners.total.bestPick.prediction}
-            threshold={markets.corners.total.bestPick.threshold}
-            projected={markets.corners.total.predictions[0]?.projected}
-            confidence={markets.corners.total.bestPick.confidence}
-          />
+        {/* AFFICHER TOUTES LES PRÉDICTIONS */}
+        {markets.corners.total.predictions.length > 0 ? (
+          markets.corners.total.predictions.map((pred, idx) => (
+            <PredictionRow
+              key={`corner-${idx}`}
+              label={`Total Corners ${idx + 1}/${markets.corners.total.predictions.length}`}
+              prediction={pred.prediction}
+              threshold={pred.threshold}
+              projected={pred.projected}
+              confidence={pred.confidence}
+            />
+          ))
+        ) : (
+          <div className="text-red-400 p-3 border border-red-600 rounded">
+            ❌ Aucune prédiction Corners
+          </div>
         )}
         {markets.corners.firstHalf.bestPick && (
           <PredictionRow
